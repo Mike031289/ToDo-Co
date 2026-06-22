@@ -20,6 +20,8 @@ $debug = getenv('SYMFONY_DEBUG') !== '0' && !$input->hasParameterOption(['--no-d
 
 if ($debug) {
     Debug::enable();
+    // Disables the conversion of warnings and notices into blocking exceptions, which is the default behavior in debug mode. This allows you to see all errors and warnings in the console output without stopping the execution of the command.
+    ini_set('error_reporting', E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_WARNING);
 }
 
 $kernel = new AppKernel($env, $debug);
