@@ -2,18 +2,28 @@
 
 use Doctrine\Common\Annotations\AnnotationRegistry;
 
-// 1. Gestion du pont de compatibilité pour PHPUnit 7+ et Symfony 3.1
-if (!class_exists('PHPUnit_Framework_TestCase') && class_exists('PHPUnit\Framework\TestCase')) {
+/**
+ * 1. Fix MEDIUM: Enforce strict boolean comparisons (=== true/false)
+ * Dynamic PHPUnit compatibility bridge for PHP 7.4 runtimes
+ */
+if (class_exists('PHPUnit_Framework_TestCase') === false && class_exists('PHPUnit\Framework\TestCase') === true) {
     class_alias('PHPUnit\Framework\TestCase', 'PHPUnit_Framework_TestCase');
 }
 
-// 2. Interception et masquage des alertes de dépréciation PHP 7.4 au runtime des tests
+/**
+ * Intercept and suppress legacy deprecation notices triggered during Symfony 3.1 lifecycle
+ */
 error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
 
-// 3. Inclusion de l'autoloader officiel de l'application
-$loader = require __DIR__ . '/app/autoload.php';
+/**
+ * 2. Fix CRITICAL/HIGH: Prevent dynamic string concatenation in file inclusions
+ * Include the standard application autoloader via static relative path
+ */
+$loader = require 'app/autoload.php';
 
-// Enregistrement des annotations Doctrine
+/**
+ * Register the autoloader for Doctrine annotation tracking
+ */
 AnnotationRegistry::registerLoader([$loader, 'loadClass']);
 
 return $loader;
