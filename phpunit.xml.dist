@@ -2,13 +2,18 @@
 
 <!-- https://phpunit.de/manual/current/en/appendixes.configuration.html -->
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="http://schema.phpunit.de/4.8/phpunit.xsd"
-         backupGlobals="false"
-         colors="true"
-        bootstrap="../../tests.bootstrap.php">
-
+        xsi:noNamespaceSchemaLocation="http://schema.phpunit.de/4.8/phpunit.xsd"
+        backupGlobals="false"
+        colors="true"
+        bootstrap="tests/bootstrap.php"
+        convertErrorsToExceptions="false"
+        convertNoticesToExceptions="false"
+        convertWarningsToExceptions="false"
+        convertDeprecationsToExceptions="false"
+>
     <php>
-        <ini name="error_reporting" value="-1" />
+        <ini name="error_reporting" value="16383" />
+        <ini name="display_errors" value="1" />
         <server name="KERNEL_DIR" value="app/" />
     </php>
 
