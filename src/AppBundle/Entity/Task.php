@@ -7,7 +7,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Entity
- * @ORM\Table
+ * @ORM\Table(name="task")
  */
 class Task
 {
@@ -24,14 +24,22 @@ class Task
     private $createdAt;
 
     /**
-     * @ORM\Column(type="string")
+     * @ORM\Column(type="string", length=255)
      * @Assert\NotBlank(message="Vous devez saisir un titre.")
+     * @Assert\Length(
+     * max = 255,
+     * maxMessage = "Le titre ne peut pas dépasser {{ limit }} caractères pour éviter la saturation."
+     * )
      */
     private $title;
 
     /**
      * @ORM\Column(type="text")
      * @Assert\NotBlank(message="Vous devez saisir du contenu.")
+     * @Assert\Length(
+     * max = 10000,
+     * maxMessage = "Le contenu est trop long (maximum {{ limit }} caractères)."
+     * )
      */
     private $content;
 
@@ -40,11 +48,19 @@ class Task
      */
     private $isDone;
 
+    /**
+     * @ORM\ManyToOne(targetEntity="User", inversedBy="tasks")
+     * @ORM\JoinColumn(name="user_id", referencedColumnName="id", nullable=true, onDelete="SET NULL")
+     */
+    private $user;
+
     public function __construct()
     {
         $this->createdAt = new \Datetime();
         $this->isDone = false;
     }
+
+    // ... Garde tes getters et setters inchangés ...
 
     public function getId()
     {
@@ -66,9 +82,12 @@ class Task
         return $this->title;
     }
 
+    /**
+     * Sécurisation active contre les failles XSS au moment de l'injection
+     */
     public function setTitle($title)
     {
-        $this->title = $title;
+        $this->title = strip_tags(trim($title));
     }
 
     public function getContent()
@@ -76,9 +95,12 @@ class Task
         return $this->content;
     }
 
+    /**
+     * Nettoyage automatique des balises HTML malveillantes
+     */
     public function setContent($content)
     {
-        $this->content = $content;
+        $this->content = strip_tags(trim($content));
     }
 
     public function isDone()
@@ -89,5 +111,21 @@ class Task
     public function toggle($flag)
     {
         $this->isDone = $flag;
+    }
+
+    /**
+     * @return User|null
+     */
+    public function getUser()
+    {
+        return $this->user;
+    }
+
+    /**
+     * @param User|null $user
+     */
+    public function setUser(User $user = null)
+    {
+        $this->user = $user;
     }
 }

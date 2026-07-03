@@ -28,8 +28,11 @@ class TaskController extends Controller
 
         $form->handleRequest($request);
 
-        if ($form->isValid()) {
+        if ($form->isSubmitted() && $form->isValid()) {
             $em = $this->getDoctrine()->getManager();
+
+            // Automandatory binding: Link the logged-in user to the created task
+            $task->setUser($this->getUser());
 
             $em->persist($task);
             $em->flush();
