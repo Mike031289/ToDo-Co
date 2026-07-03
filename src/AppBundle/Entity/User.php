@@ -8,9 +8,9 @@ use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 /**
- * @ORM\Table("user")
+ * @ORM\Table(name="user")
  * @ORM\Entity
- * @UniqueEntity("email")
+ * @UniqueEntity(fields="email", message="Cette adresse email est déjà utilisée.")
  */
 class User implements UserInterface
 {
