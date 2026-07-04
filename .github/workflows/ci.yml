@@ -12,6 +12,21 @@ jobs:
     name: PHPUnit Tests (PHP 7.4)
     runs-on: ubuntu-latest
 
+    # Provision a containerized MySQL service for integration testing
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: todo_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
     steps:
       # 1. Checkout the repository code inside the runner
       - name: Checkout Code
@@ -35,6 +50,21 @@ jobs:
       - name: Install Dependencies
         run: composer install --prefer-dist --no-progress --no-suggest
 
-      # 5. Execute the Test Suite via the standardized vendor binary
+      # 5. Inject database connection string into GitHub Environment
+      - name: Configure Test Environment Variables
+        run: |
+          echo "DATABASE_URL=mysql://root:root@127.0.0.1:3306/todo_test" >> $GITHUB_ENV
+
+      # 6. Build the database schema using Doctrine commands
+      - name: Initialize Database and Schema
+        run: |
+          php bin/console doctrine:database:create --env=test --if-not-exists
+          php bin/console doctrine:schema:update --env=test --force
+
+      # 7. Hydrate the database with development/test fixtures (e.g., user records)
+      - name: Load Test Fixtures
+        run: php bin/console doctrine:fixtures:load --env=test -n
+
+      # 8. Execute the Test Suite via the standardized vendor binary
       - name: Run Automated Test Suite
         run: vendor/bin/phpunit
