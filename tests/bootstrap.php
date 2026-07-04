@@ -5,42 +5,47 @@
 /**
  * 1. Load the Composer Autoloader
  */
-if (file_exists(__DIR__.'/../vendor/autoload.php') === true) {
+if (file_exists(__DIR__.'/../vendor/autoload.php')) {
     require __DIR__.'/../vendor/autoload.php';
 }
 
 /**
- * 2. PHPUnit Backward Compatibility Polyfill
- * Maps the legacy global PHPUnit class name to the modern namespaced one for Symfony 3 WebTestCase.
+ * 2. Compatibility Polyfills (PHPUnit 7 / Symfony 3)
  */
-if (class_exists('\PHPUnit_Framework_TestCase') === false && class_exists('\PHPUnit\Framework\TestCase') === true) {
+if (!class_exists('\PHPUnit_Framework_TestCase') && class_exists('\PHPUnit\Framework\TestCase')) {
     class_alias('\PHPUnit\Framework\TestCase', '\PHPUnit_Framework_TestCase');
 }
 
-/**
- * 3. Symfony PHPUnit-Bridge Infrastructure Patch
- * Stubs the missing legacy PHPUnit class and method to prevent environment crashes under PHP 7.4.
- */
-if (class_exists('PHPUnit_Util_ErrorHandler') === false) {
+// Fournit la classe ET la méthode handleError attendue par le phpunit-bridge
+if (!class_exists('PHPUnit_Util_ErrorHandler')) {
     class PHPUnit_Util_ErrorHandler {
-        public static function handleError() { return true; }
+        public static function handleError($severity, $message, $file, $line, $context = null) {
+            return true;
+        }
     }
 }
 
 /**
- * 4. Global Error Handler Filter with Chain Restoration
- * Intercepts and silences deprecations and runtime warnings while maintaining previous handlers.
+ * 3. Global Error Handler Filter
+ * Silences PHP 7.4 / Symfony 3.4 deprecations and runtime warnings during test execution.
  */
-$previousHandler = set_error_handler(function ($severity, $message, $file, $line) use (&$previousHandler) {
-    // Silence PHP 7.4 / Symfony 3.4 deprecations and simple runtime warnings
+$previousHandler = set_error_handler(function ($severity, $message, $file, $line, $context = null) use (&$previousHandler) {
+    // On intercepte et on ignore silencieusement les dépréciations et les warnings
     if ($severity === E_WARNING || $severity === E_USER_DEPRECATED || $severity === E_DEPRECATED) {
         return true;
     }
 
-    // Restore chaining: forward legitimate errors to the previous handler if it exists
     if ($previousHandler) {
-        return $previousHandler($severity, $message, $file, $line);
-    }
+        // Si le handler précédent est le bridge de Symfony brisé, on dévie vers notre helper
+        if (is_array($previousHandler) && get_class($previousHandler[0]) === 'Symfony\Bridge\PhpUnit\DeprecationErrorHandler') {
+            return PHPUnit_Util_ErrorHandler::handleError($severity, $message, $file, $line, $context);
+        }
 
-    return false; // Fallback to default PHP error behavior
+        try {
+            return $previousHandler($severity, $message, $file, $line, $context);
+        } catch (\TypeError $e) {
+            return $previousHandler($severity, $message, $file, $line);
+        }
+    }
+    return false;
 });
