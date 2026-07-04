@@ -59,14 +59,10 @@ jobs:
           echo "SYMFONY__DATABASE_USER=root" >> $GITHUB_ENV
           echo "SYMFONY__DATABASE_PASSWORD=" >> $GITHUB_ENV
 
-      # 6. Build the database schema using Doctrine commands (Database already created by the service container)
+      # 6. Build the database schema using Doctrine commands
       - name: Initialize Database Schema
         run: php bin/console doctrine:schema:update --env=test --force
 
-      # 7. Hydrate the database with development/test fixtures
-      - name: Load Test Fixtures
-        run: php bin/console doctrine:fixtures:load --env=test -n
-
-      # 8. Execute the Test Suite via the standardized vendor binary
+      # 7. Execute the Test Suite via the standardized vendor binary
       - name: Run Automated Test Suite
         run: vendor/bin/phpunit

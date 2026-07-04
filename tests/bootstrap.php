@@ -16,7 +16,7 @@ if (!class_exists('\PHPUnit_Framework_TestCase') && class_exists('\PHPUnit\Frame
     class_alias('\PHPUnit\Framework\TestCase', '\PHPUnit_Framework_TestCase');
 }
 
-// Fournit la classe ET la méthode handleError attendue par le phpunit-bridge
+// Provides the class AND the handleError method expected by the phpunit-bridge
 if (!class_exists('PHPUnit_Util_ErrorHandler')) {
     class PHPUnit_Util_ErrorHandler {
         public static function handleError($severity, $message, $file, $line, $context = null) {
@@ -30,21 +30,20 @@ if (!class_exists('PHPUnit_Util_ErrorHandler')) {
  * Silences PHP 7.4 / Symfony 3.4 deprecations and runtime warnings during test execution.
  */
 $previousHandler = set_error_handler(function ($severity, $message, $file, $line, $context = null) use (&$previousHandler) {
-    // On intercepte et on ignore silencieusement les dépréciations et les warnings
+    // Intercept and silently ignore deprecations and runtime warnings
     if ($severity === E_WARNING || $severity === E_USER_DEPRECATED || $severity === E_DEPRECATED) {
         return true;
     }
 
-    if ($previousHandler) {
-        // Si le handler précédent est le bridge de Symfony brisé, on dévie vers notre helper
-        if (is_array($previousHandler) && get_class($previousHandler[0]) === 'Symfony\Bridge\PhpUnit\DeprecationErrorHandler') {
+    if ($previousHandler !== null) {
+        // Safe check for array callables matching the broken Symfony DeprecationErrorHandler object
+        if (is_array($previousHandler) === true && isset($previousHandler[0]) && is_object($previousHandler[0]) && get_class($previousHandler[0]) === 'Symfony\Bridge\PhpUnit\DeprecationErrorHandler') {
             return PHPUnit_Util_ErrorHandler::handleError($severity, $message, $file, $line, $context);
         }
 
-        try {
+        // Forward to the previous handler using standard PHP 7.4 error handler arguments
+        if (is_callable($previousHandler)) {
             return $previousHandler($severity, $message, $file, $line, $context);
-        } catch (\TypeError $e) {
-            return $previousHandler($severity, $message, $file, $line);
         }
     }
     return false;
