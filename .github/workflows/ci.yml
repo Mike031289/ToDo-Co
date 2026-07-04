@@ -17,8 +17,8 @@ jobs:
       mysql:
         image: mysql:5.7
         env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: todo_test
+          MYSQL_ALLOW_EMPTY_PASSWORD: 'yes' # Allows root connection with no password
+          MYSQL_DATABASE: todoco_db          # Matches your local database name
         ports:
           - 3306:3306
         options: >-
@@ -46,14 +46,19 @@ jobs:
         run: composer validate
 
       # 4. Install Project Dependencies using Composer
-      # --prefer-dist bypasses source downloads for speed, --no-progress cleans logs
       - name: Install Dependencies
         run: composer install --prefer-dist --no-progress --no-suggest
 
-      # 5. Inject database connection string into GitHub Environment
+      # 5. Inject legacy Symfony 3.4 parameters into GitHub Environment
+      # This explicitly overrides your parameters.yml settings for the CI environment
       - name: Configure Test Environment Variables
         run: |
-          echo "DATABASE_URL=mysql://root:root@127.0.0.1:3306/todo_test" >> $GITHUB_ENV
+          echo "DATABASE_URL=mysql://root:@127.0.0.1:3306/todoco_db" >> $GITHUB_ENV
+          echo "SYMFONY__DATABASE_HOST=127.0.0.1" >> $GITHUB_ENV
+          echo "SYMFONY__DATABASE_PORT=3306" >> $GITHUB_ENV
+          echo "SYMFONY__DATABASE_NAME=todoco_db" >> $GITHUB_ENV
+          echo "SYMFONY__DATABASE_USER=root" >> $GITHUB_ENV
+          echo "SYMFONY__DATABASE_PASSWORD=" >> $GITHUB_ENV
 
       # 6. Build the database schema using Doctrine commands
       - name: Initialize Database and Schema
@@ -61,7 +66,7 @@ jobs:
           php bin/console doctrine:database:create --env=test --if-not-exists
           php bin/console doctrine:schema:update --env=test --force
 
-      # 7. Hydrate the database with development/test fixtures (e.g., user records)
+      # 7. Hydrate the database with development/test fixtures
       - name: Load Test Fixtures
         run: php bin/console doctrine:fixtures:load --env=test -n
 
