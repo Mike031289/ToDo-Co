@@ -23,6 +23,7 @@ jobs:
         with:
           php-version: '7.4'
           extensions: mbstring, xml, ctype, iconv, pdo, pdo_mysql, mysqli
+          tools: composer:2.2
           coverage: none # Disabled to optimize pipeline execution speed
 
       # 3. Validate composer.json syntax
