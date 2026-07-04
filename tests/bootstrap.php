@@ -5,7 +5,7 @@
 /**
  * 1. Load the Composer Autoloader
  */
-if (file_exists(__DIR__.'/../vendor/autoload.php')) {
+if (file_exists(__DIR__.'/../vendor/autoload.php') === false) {
     require __DIR__.'/../vendor/autoload.php';
 }
 
@@ -13,7 +13,7 @@ if (file_exists(__DIR__.'/../vendor/autoload.php')) {
  * 2. PHPUnit Backward Compatibility Polyfill
  * Maps the legacy global PHPUnit class name to the modern namespaced one for Symfony 3 WebTestCase.
  */
-if (!class_exists('\PHPUnit_Framework_TestCase') && class_exists('\PHPUnit\Framework\TestCase')) {
+if (class_exists('\PHPUnit_Framework_TestCase') === false && class_exists('\PHPUnit\Framework\TestCase')) {
     class_alias('\PHPUnit\Framework\TestCase', '\PHPUnit_Framework_TestCase');
 }
 
@@ -21,19 +21,26 @@ if (!class_exists('\PHPUnit_Framework_TestCase') && class_exists('\PHPUnit\Frame
  * 3. Symfony PHPUnit-Bridge Infrastructure Patch
  * Stubs the missing legacy PHPUnit class and method to prevent environment crashes under PHP 7.4.
  */
-if (!class_exists('PHPUnit_Util_ErrorHandler')) {
+if (class_exists('PHPUnit_Util_ErrorHandler') === false) {
     class PHPUnit_Util_ErrorHandler {
         public static function handleError() { return true; }
     }
 }
 
 /**
- * 4. Global Error Handler Filter
- * Intercepts and silences deprecations and runtime warnings to ensure a clean test execution.
+ * 4. Global Error Handler Filter with Chain Restoration
+ * Intercepts and silences deprecations and runtime warnings while maintaining previous handlers.
  */
-set_error_handler(function ($severity) {
+$previousHandler = set_error_handler(function ($severity, $message, $file, $line) use (&$previousHandler) {
+    // Silence PHP 7.4 / Symfony 3.4 deprecations and simple runtime warnings
     if ($severity === E_WARNING || $severity === E_USER_DEPRECATED || $severity === E_DEPRECATED) {
-        return true; // Bypass and silence the warning
+        return true;
     }
-    return false; // Let actual fatal errors pass through
+
+    // Restore chaining: forward legitimate errors to the previous handler if it exists
+    if ($previousHandler) {
+        return $previousHandler($severity, $message, $file, $line);
+    }
+
+    return false; // Fallback to default PHP error behavior
 });
