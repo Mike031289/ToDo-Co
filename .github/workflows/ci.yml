@@ -1,0 +1,39 @@
+name: Symfony 3.4 CI Pipeline
+
+# Trigger the workflow on push or pull requests for the develop and main branches
+on:
+  push:
+    branches: [ develop, main, master ]
+  pull_request:
+    branches: [ develop, main, master ]
+
+jobs:
+  tests:
+    name: PHPUnit Tests (PHP 7.4)
+    runs-on: ubuntu-20.04
+
+    steps:
+      # 1. Checkout the repository code inside the runner
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 2. Setup PHP Environment with required extensions for Symfony 3.4
+      - name: Setup PHP Environment
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          extensions: mbstring, xml, ctype, iconv, pdo, pdo_mysql, mysqli
+          coverage: none # Disabled to optimize pipeline execution speed
+
+      # 3. Validate composer.json syntax
+      - name: Validate Composer Configuration
+        run: composer validate --strict
+
+      # 4. Install Project Dependencies using Composer
+      # --prefer-dist bypasses source downloads for speed, --no-progress cleans logs
+      - name: Install Dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest
+
+      # 5. Execute the Test Suite via the standardized vendor binary
+      - name: Run Automated Test Suite
+        run: vendor/bin/phpunit
