@@ -1,5 +1,7 @@
-ToDoList
-========
+
+# ToDo & Co Application
+
+[![Symfony 3.4 CI Pipeline](https://github.com/Mike031289/ToDo-Co/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/Mike031289/ToDo-Co/actions/workflows/ci.yml)
 
 Base du projet #8 : Améliorez un projet existant
 https://openclassrooms.com/projects/ameliorer-un-projet-existant-1

@@ -1,5 +1,6 @@
 {
     "name": "saro0h/to-do-list",
+    "description": "To-Do List application built with Symfony 3.4",
     "license": "proprietary",
     "type": "project",
     "autoload": {

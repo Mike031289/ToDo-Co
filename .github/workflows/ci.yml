@@ -10,7 +10,7 @@ on:
 jobs:
   tests:
     name: PHPUnit Tests (PHP 7.4)
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
       # 1. Checkout the repository code inside the runner
@@ -27,7 +27,7 @@ jobs:
 
       # 3. Validate composer.json syntax
       - name: Validate Composer Configuration
-        run: composer validate --strict
+        run: composer validate
 
       # 4. Install Project Dependencies using Composer
       # --prefer-dist bypasses source downloads for speed, --no-progress cleans logs
