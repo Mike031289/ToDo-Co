@@ -5,7 +5,7 @@
 /**
  * 1. Load the Composer Autoloader
  */
-if (file_exists(__DIR__.'/../vendor/autoload.php') === false) {
+if (file_exists(__DIR__.'/../vendor/autoload.php') === true) {
     require __DIR__.'/../vendor/autoload.php';
 }
 
@@ -13,7 +13,7 @@ if (file_exists(__DIR__.'/../vendor/autoload.php') === false) {
  * 2. PHPUnit Backward Compatibility Polyfill
  * Maps the legacy global PHPUnit class name to the modern namespaced one for Symfony 3 WebTestCase.
  */
-if (class_exists('\PHPUnit_Framework_TestCase') === false && class_exists('\PHPUnit\Framework\TestCase')) {
+if (class_exists('\PHPUnit_Framework_TestCase') === false && class_exists('\PHPUnit\Framework\TestCase') === true) {
     class_alias('\PHPUnit\Framework\TestCase', '\PHPUnit_Framework_TestCase');
 }
 

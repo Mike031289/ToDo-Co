@@ -1,6 +1,5 @@
 name: Symfony 3.4 CI Pipeline
 
-# Trigger the workflow on push or pull requests for the develop and main branches
 on:
   push:
     branches: [ develop, main, master ]
@@ -12,13 +11,12 @@ jobs:
     name: PHPUnit Tests (PHP 7.4)
     runs-on: ubuntu-latest
 
-    # Provision a containerized MySQL service for integration testing
     services:
       mysql:
         image: mysql:5.7
         env:
-          MYSQL_ALLOW_EMPTY_PASSWORD: 'yes' # Allows root connection with no password
-          MYSQL_DATABASE: todoco_db          # Matches your local database name
+          MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+          MYSQL_DATABASE: todoco_db
         ports:
           - 3306:3306
         options: >-
@@ -28,29 +26,23 @@ jobs:
           --health-retries=3
 
     steps:
-      # 1. Checkout the repository code inside the runner
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 2. Setup PHP Environment with required extensions for Symfony 3.4
       - name: Setup PHP Environment
         uses: shivammathur/setup-php@v2
         with:
           php-version: '7.4'
           extensions: mbstring, xml, ctype, iconv, pdo, pdo_mysql, mysqli
           tools: composer:2.2
-          coverage: none # Disabled to optimize pipeline execution speed
+          coverage: none
 
-      # 3. Validate composer.json syntax
       - name: Validate Composer Configuration
         run: composer validate
 
-      # 4. Install Project Dependencies using Composer
       - name: Install Dependencies
         run: composer install --prefer-dist --no-progress --no-suggest
 
-      # 5. Inject legacy Symfony 3.4 parameters into GitHub Environment
-      # This explicitly overrides your parameters.yml settings for the CI environment
       - name: Configure Test Environment Variables
         run: |
           echo "DATABASE_URL=mysql://root:@127.0.0.1:3306/todoco_db" >> $GITHUB_ENV
@@ -60,16 +52,12 @@ jobs:
           echo "SYMFONY__DATABASE_USER=root" >> $GITHUB_ENV
           echo "SYMFONY__DATABASE_PASSWORD=" >> $GITHUB_ENV
 
-      # 6. Build the database schema using Doctrine commands
-      - name: Initialize Database and Schema
-        run: |
-          php bin/console doctrine:database:create --env=test --if-not-exists
-          php bin/console doctrine:schema:update --env=test --force
+      # Removed database:create step as the database is auto-initialized by the MySQL service container
+      - name: Initialize Database Schema
+        run: php bin/console doctrine:schema:update --env=test --force
 
-      # 7. Hydrate the database with development/test fixtures
       - name: Load Test Fixtures
         run: php bin/console doctrine:fixtures:load --env=test -n
 
-      # 8. Execute the Test Suite via the standardized vendor binary
       - name: Run Automated Test Suite
         run: vendor/bin/phpunit
