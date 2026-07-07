@@ -60,8 +60,6 @@ class Task
         $this->isDone = false;
     }
 
-    // ... Garde tes getters et setters inchangés ...
-
     public function getId()
     {
         return $this->id;
@@ -82,9 +80,6 @@ class Task
         return $this->title;
     }
 
-    /**
-     * Sécurisation active contre les failles XSS au moment de l'injection
-     */
     public function setTitle($title)
     {
         $this->title = strip_tags(trim($title));
@@ -95,9 +90,6 @@ class Task
         return $this->content;
     }
 
-    /**
-     * Nettoyage automatique des balises HTML malveillantes
-     */
     public function setContent($content)
     {
         $this->content = strip_tags(trim($content));

@@ -35,7 +35,8 @@
         "symfony/phpunit-bridge": "^3.0",
         "phpunit/phpunit": "^7.5",
         "doctrine/instantiator": "1.0.5 as 1.1.0",
-        "dama/doctrine-test-bundle": "*"
+        "dama/doctrine-test-bundle": "*",
+        "doctrine/doctrine-fixtures-bundle": "^2.3"
     },
     "scripts": {
         "symfony-scripts": [
