@@ -3,8 +3,6 @@
 namespace Tests\AppBundle\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Symfony\Component\BrowserKit\Cookie;
-use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 
 class TaskControllerTest extends WebTestCase
 {
@@ -13,49 +11,34 @@ class TaskControllerTest extends WebTestCase
      */
     public function testCreateTaskSuccess()
     {
-        // 1. Create a single client
-        $client = static::createClient();
+        // 1. Initialize the client with HTTP Basic Auth credentials to bypass session management isolation
+        $client = static::createClient([], [
+            'PHP_AUTH_USER' => 'Mike',
+            'PHP_AUTH_PW'   => 'password123',
+        ]);
         $container = $client->getContainer();
 
-        // 2. Authenticate the client via Session Token (bypass form login)
-        $em = $container->get('doctrine')->getManager();
-        $user = $em->getRepository('AppBundle:User')->findOneBy(['username' => 'Mike']);
-
-        if (!$user) {
-            $this->fail("L'utilisateur de test 'Mike' n'existe pas dans la base de données.");
-        }
-
-        $session = $container->get('session');
-        $firewallContext = 'main'; // Nom de ton pare-feu dans app/config/security.yml
-
-        $token = new UsernamePasswordToken($user, null, $firewallContext, $user->getRoles());
-        $session->set('_security_' . $firewallContext, serialize($token));
-        $session->save();
-
-        $cookie = new Cookie($session->getName(), $session->getId());
-        $client->getCookieJar()->set($cookie);
-
-        // 3. Request the creation page using the router
+        // 2. Request the task creation page dynamically using the router service
         $crawler = $client->request('GET', $container->get('router')->generate('task_create'));
 
-        // 4. Verify page is accessible (HTTP 200)
+        // 3. Assert that the creation page is successfully accessible (HTTP 200)
         $this->assertEquals(200, $client->getResponse()->getStatusCode());
 
-        // 5. Select and fill the form
+        // 4. Select the submission button and populate the form data structures
         $form = $crawler->selectButton('Ajouter la tâche')->form();
-
         $form['task[title]'] = 'New Task From PHPUnit';
         $form['task[content]'] = 'Testing automated task submission.';
 
-        // 6. Submit form
+        // 5. Submit the populated form
         $client->submit($form);
 
-        // 7. Verify redirection (HTTP 302)
+        // 6. Assert that the application triggers a redirect response (HTTP 302)
         $this->assertEquals(302, $client->getResponse()->getStatusCode());
 
-        // 8. Follow redirection and verify success message
+        // 7. Follow the redirect to the target page and capture the new HTML content
         $crawler = $client->followRedirect();
 
+        // 8. Assert that a success flash notification is displayed on screen
         $this->assertGreaterThan(
             0,
             $crawler->filter('.alert-success')->count(),
