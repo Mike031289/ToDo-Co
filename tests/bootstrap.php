@@ -42,7 +42,7 @@ $previousHandler = set_error_handler(function ($severity, $message, $file, $line
     }
 
     // Restore chaining: forward legitimate errors to the previous handler if it exists
-    if ((isset($previousHandler) && $previousHandler !== null) === true) {
+    if (($previousHandler !== null) === true) {
         return $previousHandler($severity, $message, $file, $line);
     }
 
