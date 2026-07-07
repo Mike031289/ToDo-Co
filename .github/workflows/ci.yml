@@ -18,7 +18,7 @@ jobs:
         image: mysql:5.7
         env:
           MYSQL_ALLOW_EMPTY_PASSWORD: 'yes' # Allows root connection with no password
-          MYSQL_DATABASE: todoco_db          # Automatically initializes the database
+          MYSQL_DATABASE: todoco_db          # Matches your local database name
         ports:
           - 3306:3306
         options: >-
@@ -39,7 +39,7 @@ jobs:
           php-version: '7.4'
           extensions: mbstring, xml, ctype, iconv, pdo, pdo_mysql, mysqli
           tools: composer:2.2
-          coverage: none
+          coverage: none # Disabled to optimize pipeline execution speed
 
       # 3. Validate composer.json syntax
       - name: Validate Composer Configuration
@@ -50,6 +50,7 @@ jobs:
         run: composer install --prefer-dist --no-progress --no-suggest
 
       # 5. Inject legacy Symfony 3.4 parameters into GitHub Environment
+      # This explicitly overrides your parameters.yml settings for the CI environment
       - name: Configure Test Environment Variables
         run: |
           echo "DATABASE_URL=mysql://root:@127.0.0.1:3306/todoco_db" >> $GITHUB_ENV
@@ -60,9 +61,15 @@ jobs:
           echo "SYMFONY__DATABASE_PASSWORD=" >> $GITHUB_ENV
 
       # 6. Build the database schema using Doctrine commands
-      - name: Initialize Database Schema
-        run: php bin/console doctrine:schema:update --env=test --force
+      - name: Initialize Database and Schema
+        run: |
+          php bin/console doctrine:database:create --env=test --if-not-exists
+          php bin/console doctrine:schema:update --env=test --force
 
-      # 7. Execute the Test Suite via the standardized vendor binary
+      # 7. Hydrate the database with development/test fixtures
+      - name: Load Test Fixtures
+        run: php bin/console doctrine:fixtures:load --env=test -n
+
+      # 8. Execute the Test Suite via the standardized vendor binary
       - name: Run Automated Test Suite
         run: vendor/bin/phpunit

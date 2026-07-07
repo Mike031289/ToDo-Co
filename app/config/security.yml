@@ -16,6 +16,8 @@ security:
         main:
             anonymous: ~
             pattern: ^/
+            # Enable HTTP Basic Authentication for automated functional testing
+            http_basic: ~
             form_login:
                 login_path: login
                 check_path: login_check
@@ -26,4 +28,5 @@ security:
     access_control:
         - { path: ^/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/users, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/, roles: ROLE_ADMIN }
         - { path: ^/, roles: ROLE_USER }
