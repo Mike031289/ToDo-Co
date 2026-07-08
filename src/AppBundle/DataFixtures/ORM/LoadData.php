@@ -32,7 +32,7 @@ class LoadData implements FixtureInterface, ContainerAwareInterface
         $encoder = $this->container->get('security.password_encoder');
 
         // ==========================================
-        // 1. CREATE USERS
+        // 1. CREATE USERS (Including Virtual "anonyme")
         // ==========================================
 
         // Create Administrative User 'Mike'
@@ -43,13 +43,22 @@ class LoadData implements FixtureInterface, ContainerAwareInterface
         $adminUser->setPassword($encoder->encodePassword($adminUser, 'password123'));
         $manager->persist($adminUser);
 
-        // Create a Standard User (Optional, but useful for testing)
+        // Create a Standard User
         $regularUser = new User();
         $regularUser->setUsername('JohnDoe');
         $regularUser->setEmail('john@example.com');
         $regularUser->setRoles(['ROLE_USER']);
         $regularUser->setPassword($encoder->encodePassword($regularUser, 'password123'));
         $manager->persist($regularUser);
+
+        // Create the Virtual "anonyme" User for Legacy Data Integrity
+        $anonymousUser = new User();
+        $anonymousUser->setUsername('anonyme');
+        $anonymousUser->setEmail('anonymous@todo-co.local');
+        $anonymousUser->setRoles(['ROLE_USER']);
+        // Generates a random unguessable password since nobody logs into this specific profile
+        $anonymousUser->setPassword($encoder->encodePassword($anonymousUser, bin2hex(random_bytes(16))));
+        $manager->persist($anonymousUser);
 
         // ==========================================
         // 2. CREATE TASKS LINKED TO ADMIN USER ('Mike')
@@ -72,16 +81,16 @@ class LoadData implements FixtureInterface, ContainerAwareInterface
         $manager->persist($adminTask2);
 
         // ==========================================
-        // 3. CREATE ANONYMOUS TASKS
+        // 3. CREATE LEGACY ANONYMOUS TASKS
         // ==========================================
 
-        // Scenario A: Your Task entity allows NULL for the user relation (Standard Symfony layout)
+        // Linked to the virtual "anonyme" object to prevent schema/nullable conflicts
         $anonymousTask1 = new Task();
         $anonymousTask1->setTitle('Anonymous Task One');
         $anonymousTask1->setContent('This task has no explicit author assigned.');
         $anonymousTask1->setCreatedAt(new \DateTime('-2 days'));
         $anonymousTask1->toggle(false);
-        $anonymousTask1->setUser(null); // Explicitly anonymous (null)
+        $anonymousTask1->setUser($anonymousUser); // Clean migration link
         $manager->persist($anonymousTask1);
 
         $anonymousTask2 = new Task();
@@ -89,7 +98,7 @@ class LoadData implements FixtureInterface, ContainerAwareInterface
         $anonymousTask2->setContent('Another old legacy task safely kept for migration tests.');
         $anonymousTask2->setCreatedAt(new \DateTime('-3 days'));
         $anonymousTask2->toggle(false);
-        $anonymousTask2->setUser(null); // Explicitly anonymous (null)
+        $anonymousTask2->setUser($anonymousUser); // Clean migration link
         $manager->persist($anonymousTask2);
 
         // ==========================================

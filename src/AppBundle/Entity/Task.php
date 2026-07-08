@@ -50,7 +50,7 @@ class Task
 
     /**
      * @ORM\ManyToOne(targetEntity="User", inversedBy="tasks")
-     * @ORM\JoinColumn(name="user_id", referencedColumnName="id", nullable=true, onDelete="SET NULL")
+     * @ORM\JoinColumn(name="user_id", referencedColumnName="id", nullable=false)
      */
     private $user;
 
