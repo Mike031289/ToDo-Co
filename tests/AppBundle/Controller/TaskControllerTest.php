@@ -45,4 +45,55 @@ class TaskControllerTest extends WebTestCase
             'Expected a success flash message to be displayed.'
         );
     }
+
+    /**
+     * Test editing a task successfully
+     * Test that editing a task does not alter or clear its original user
+     */
+    public function testEditTaskUserRemainsImmutable()
+    {
+        // 1. Authenticate the client using our robust HTTP Basic Auth setup
+        $client = static::createClient([], [
+            'PHP_AUTH_USER' => 'Mike',
+            'PHP_AUTH_PW'   => 'password123', // Replace with your exact fixture password
+        ]);
+        $container = $client->getContainer();
+        $em = $container->get('doctrine')->getManager();
+
+        // 2. Retrieve a task from the database that already has an author
+        $task = $em->getRepository('AppBundle:Task')->findOneBy([]);
+        if (($task !== null) === false) {
+            $this->fail('No task found in the database to run the edit test.');
+        }
+
+        $originalUser = $task->getUser(); // Save the original entity reference to compare later
+        $taskId = $task->getId();
+
+        // 3. Request the edit page for this specific task
+        $crawler = $client->request('GET', '/tasks/' . $taskId . '/edit');
+        $this->assertEquals(200, $client->getResponse()->getStatusCode());
+
+        // 4. Submit the form with new details
+        $form = $crawler->selectButton('Modifier')->form(); // Adjust button text if it's different (e.g. 'Sauvegarder')
+        $form['task[title]'] = 'Strictly Updated Title';
+        $form['task[content]'] = 'Verifying author data integrity during POST submission.';
+
+        $client->submit($form);
+        $this->assertEquals(302, $client->getResponse()->getStatusCode());
+
+        // 5. Clear the EntityManager to force reload fresh data from the database
+        $em->clear();
+
+        // 6. Fetch the updated task and assert data integrity
+        $updatedTask = $em->getRepository('AppBundle:Task')->find($taskId);
+
+        $this->assertEquals('Strictly Updated Title',
+            $updatedTask->getTitle()
+        );
+        $this->assertEquals($originalUser->getId(),
+            $updatedTask->getUser()->getId(),
+            'The task user ID was altered or cleared during the update process.'
+        );
+    }
+
 }
