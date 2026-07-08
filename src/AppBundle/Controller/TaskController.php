@@ -50,11 +50,16 @@ class TaskController extends Controller
      */
     public function editAction(Task $task, Request $request)
     {
-        $form = $this->createForm(TaskType::class, $task);
+        // 1. Save the original user before handling the request
+        $originalUser = $task->getUser();
 
+        $form = $this->createForm(TaskType::class, $task);
         $form->handleRequest($request);
 
-        if ($form->isValid()) {
+        if ($form->isSubmitted() && $form->isValid()) {
+            // 2. Enforce immutability: bypass any falsified request data by restoring the original user
+            $task->setUser($originalUser);
+
             $this->getDoctrine()->getManager()->flush();
 
             $this->addFlash('success', 'La tâche a bien été modifiée.');
