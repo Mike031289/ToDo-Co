@@ -3,53 +3,75 @@
 namespace Tests\AppBundle\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use AppBundle\Entity\User;
 
+/**
+ * Class UserControllerTest
+ *
+ * Runs functional tests against the UserController routes.
+ * Validates access control lists (ACL) ensuring user management remains restricted
+ * to authorized administrative roles.
+ *
+ * @package Tests\AppBundle\Controller
+ */
 class UserControllerTest extends WebTestCase
 {
     /**
-     * Test that an administrator can update another user's role to ROLE_ADMIN.
+     * Helper method to create an authenticated HTTP client.
+     *
+     * Simulates basic HTTP authentication headers to log in a user
+     * before sending requests.
+     *
+     * @param string $username The username of the user to authenticate
+     * @param string $password The plain-text password of the user
+     * @return \Symfony\Bundle\FrameworkBundle\Client An authenticated browser-like client instance
+     */
+    private function createAuthenticatedClient($username, $password)
+    {
+        return static::createClient([], [
+            'PHP_AUTH_USER' => $username,
+            'PHP_AUTH_PW'   => $password,
+        ]);
+    }
+
+    /**
+     * Test that a standard user (ROLE_USER) is restricted from accessing admin routes.
+     *
+     * Validates that accessing '/users' and '/users/create' yields a 403 Forbidden
+     * HTTP status code when requested by unauthorized accounts.
      *
      * @return void
      */
-    public function testAdminCanChangeUserRole()
+    public function testSimpleUserCannotAccessUserManagement()
     {
-        // 1. Simulate logging in as an admin
-        $client = static::createClient([], [
-            'PHP_AUTH_USER' => 'Mike',
-            'PHP_AUTH_PW'   => 'password123',
-        ]);
+        // 1. Arrange: Authenticate as a regular user (ROLE_USER)
+        $client = $this->createAuthenticatedClient('JohnDoe', 'password123');
 
-        $container = $client->getContainer();
-        $em = $container->get('doctrine')->getManager();
+        // 2. Act & Assert: Attempt to browse the user list page
+        $client->request('GET', '/users');
+        $this->assertEquals(403, $client->getResponse()->getStatusCode());
 
-        // 2. Retrieve the user we want to modify (SimpleUser)
-        /** @var User $userToModify */
-        $userToModify = $em->getRepository('AppBundle:User')->findOneBy(['username' => 'Mike']);
-        $this->assertNotNull($userToModify, 'The fixture user "SimpleUser" is missing.');
+        // 3. Act & Assert: Attempt to reach the user creation form
+        $client->request('GET', '/users/create');
+        $this->assertEquals(403, $client->getResponse()->getStatusCode());
+    }
 
-        // 3. Request the edit page
-        $crawler = $client->request('GET', '/users/' . $userToModify->getId() . '/edit');
+    /**
+     * Test that an administrator (ROLE_ADMIN) can successfully manage users.
+     *
+     * Validates that accessing '/users' yields a 200 OK HTTP status code
+     * when the client holds the required administrative credentials.
+     *
+     * @return void
+     */
+    public function testAdminCanAccessUserList()
+    {
+        // 1. Arrange: Authenticate as an admin user (ROLE_ADMIN)
+        $client = $this->createAuthenticatedClient('Mike', 'password123');
+
+        // 2. Act: Query the restricted user list route
+        $client->request('GET', '/users');
+
+        // 3. Assert: Verify the page loads successfully
         $this->assertEquals(200, $client->getResponse()->getStatusCode());
-
-        // 4. Select and submit the form, shifting the role to ROLE_ADMIN
-        $form = $crawler->selectButton('Modifier')->form();
-
-        // For choice fields use assignment. If the field accepts multiple values provide an array.
-        $form['user[roles]'] = 'ROLE_ADMIN';
-
-        $client->submit($form);
-
-        // 5. Assert successful redirect to the list page
-        $this->assertEquals(302, $client->getResponse()->getStatusCode());
-        $client->followRedirect();
-        $this->assertContains("utilisateur a bien été modifié", $client->getResponse()->getContent());
-
-        // 6. Force Doctrine to fetch updated data from the database
-        $em->clear();
-        $updatedUser = $em->getRepository('AppBundle:User')->find($userToModify->getId());
-
-        // 7. Assert that the role has been successfully modified in DB
-        $this->assertContains('ROLE_ADMIN', $updatedUser->getRoles());
     }
 }

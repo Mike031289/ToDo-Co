@@ -146,7 +146,7 @@ class User implements UserInterface
         $roles = $this->roles;
 
         // Guarantee every user at least has ROLE_USER
-        if (!in_array('ROLE_USER', $roles, true)) {
+        if (in_array('ROLE_USER', $roles) === false) {
             $roles[] = 'ROLE_USER';
         }
 
