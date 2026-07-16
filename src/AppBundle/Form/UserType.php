@@ -47,7 +47,7 @@ class UserType extends AbstractType
             ->addModelTransformer(new CallbackTransformer(
                 function ($rolesAsArray) {
                     // Convert the entity array (e.g. ['ROLE_USER']) to a single string to auto-select the form option
-                    return count($rolesAsArray) ? $rolesAsArray[0] : null;
+                    return count($rolesAsArray) > 0 ? $rolesAsArray[0] : null;
                 },
                 function ($roleAsString) {
                     // Convert the selected string back into an array (e.g. ['ROLE_USER']) to store it in the database
