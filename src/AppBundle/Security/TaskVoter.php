@@ -94,6 +94,13 @@ class TaskVoter extends Voter
     {
         $author = $task->getUser();
 
+        // SCENARIO 1: The task is linked to an "anonymous" author (or has no author).
+        // Only admins (ROLE_ADMIN) are allowed to delete these tasks.
+        if ($author === null || $author->getUsername() === 'anonyme') {
+            return $this->decisionManager->decide($token, ['ROLE_ADMIN']);
+        }
+
+        // SCENARIO 2: The task has a valid author.
         // The logged-in user must be the strict author of the task.
         return $user->getId() === $author->getId();
     }
