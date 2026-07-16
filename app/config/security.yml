@@ -29,5 +29,4 @@ security:
         - { path: ^/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         # Protect all user management paths (list, create, edit)
         - { path: ^/users, roles: ROLE_ADMIN }
-        - { path: ^/, roles: ROLE_ADMIN }
         - { path: ^/, roles: ROLE_USER }

@@ -1,36 +1,122 @@
 {% extends 'base.html.twig' %}
-
-{% block header_img %}<img class="slide-image" src="{{ asset('img/todolist_content.jpg') }}" alt="todo list">{% endblock %}
-
-{% block body %}
-    <a href="{{ path('task_create') }}" class="btn btn-info pull-right">Créer une tâche</a>
-    <div class="row">
-        {% for task in tasks %}
-        <div class="col-sm-4 col-lg-4 col-md-4">
-            <div class="thumbnail">
-                <div class="caption">
-                    <h4 class="pull-right">
-                        {% if task.isDone %}<span class="glyphicon glyphicon-ok"></span>{% else %}<span class="glyphicon glyphicon-remove"></span>{% endif %}
-                    </h4>
-                    <h4><a href="{{ path('task_edit', {'id' : task.id }) }}">{{ task.title }}</a></h4>
-                    <p>{{ task.content }}</p>
-                </div>
-                <div>
-                    <form action="{{ path('task_toggle', {'id' : task.id }) }}">
-                        <button class="btn btn-success btn-sm pull-right">
-                            {% if not task.isDone %}Marquer comme faite{% else %}Marquer non terminée{% endif %}
-                        </button>
-                    </form>
-                    <form action="{{ path('task_delete', {'id' : task.id }) }}">
-                        <button class="btn btn-danger btn-sm pull-right">Supprimer</button>
-                    </form>
-                </div>
+{% block header_img %}
+    <img class="slide-image" src="{{ asset('img/todolist_content.jpg') }}" alt="todo list">
+    {% endblock %}
+    {% block body %}
+        <!-- Page header with action button -->
+        <div class="row mb-4" style="margin-bottom: 30px; display: flex; align-items: center; justify-content: space-between;">
+            <div class="col-xs-6">
+                <h2 style="margin-top: 0;">
+                    Liste des tâches
+                </h2>
+            </div>
+            <div class="col-xs-6 text-right">
+                <a href="{{ path('task_create') }}" class="btn btn-primary btn-lg">
+                    <span class="glyphicon glyphicon-plus"></span>
+                    Créer une tâche
+                </a>
             </div>
         </div>
-        {% else %}
-            <div class="alert alert-warning" role="alert">
-                Il n'y a pas encore de tâche enregistrée. <a href="{{ path('task_create') }}" class="btn btn-warning pull-right">Créer une tâche</a>
-            </div>
-        {% endfor %}
-    </div>
-{% endblock %}
+        <!-- Tasks Grid -->
+        <div class="row">
+            {% for task in tasks %}
+                {# Dynamically determine card styles based on the task status #}
+                {% set border_color = 'panel-danger' %}
+                {% set badge_color = 'label-danger' %}
+                {% set status_icon = 'glyphicon-remove' %}
+                {% set status_label = 'To Do' %}
+                {% if task.isDone %}
+                    {% set border_color = 'panel-success' %}
+                    {% set badge_color = 'label-success' %}
+                    {% set status_icon = 'glyphicon-ok' %}
+                    {% set status_label = 'Done' %}
+                {# Optional: If your Task entity has an intermediate state like "inProgress" #}
+                    {% elseif task.inProgress is defined and task.inProgress %}
+                    {% set border_color = 'panel-info' %}
+                    {% set badge_color = 'label-info' %}
+                    {% set status_icon = 'glyphicon-refresh' %}
+                    {% set status_label = 'In Progress' %}
+                {% endif %}
+                <div class="col-sm-6 col-md-4" style="margin-bottom: 25px;">
+                    <div class="panel {{ border_color }}" style="box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-radius: 6px; overflow: hidden; transition: transform 0.2s ease-in-out;">
+                        <!-- Task Header (Status Badge & Creation Date) -->
+                        <div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px;">
+                            <span class="label {{ badge_color }}" style="font-size: 11px; padding: 4px 8px; text-transform: uppercase;">
+                                <span class="glyphicon {{ status_icon }}"></span>
+                                {{ status_label }}
+                            </span>
+                            <small style="color: #666; font-size: 11px;">
+                                <span class="glyphicon glyphicon-calendar"></span>
+                                {{ task.createdAt|date('d/m/Y') }}
+                            </small>
+                        </div>
+                        <!-- Task Body (Title, Content & Author metadata) -->
+                        <div class="panel-body" style="padding: 20px; min-height: 140px; display: flex; flex-direction: column; justify-content: space-between;">
+                            <div>
+                                <h4 style="margin-top: 0; margin-bottom: 10px; font-weight: bold;">
+                                    <a href="{{ path('task_edit', {'id' : task.id }) }}" style="color: #333; text-decoration: none;">
+                                        {{ task.title }}
+                                    </a>
+                                </h4>
+                                <p style="color: #666; font-size: 13px; line-height: 1.5; margin-bottom: 15px;">
+                                    {{ task.content }}
+                                </p>
+                            </div>
+                            <!-- Metadata (Author details) -->
+                            <div style="border-top: 1px dashed #eee; padding-top: 10px; margin-top: 10px; font-size: 11px; color: #777;">
+                                <span class="glyphicon glyphicon-user"></span>
+                                Créé par :
+                                <strong>
+                                    {{ task.user ? task.user.username : 'Anonyme' }}
+                                </strong>
+                            </div>
+                        </div>
+                        <!-- Card Footer with user actions -->
+                        <div class="panel-footer" style="background-color: #fafafa; border-top: 1px solid #f0f0f0; padding: 12px 15px; display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
+                            <!-- Toggle Status Button -->
+                            <form action="{{ path('task_toggle', {'id' : task.id }) }}" method="POST" style="margin: 0; display: inline-block;">
+                                <button class="btn btn-default btn-sm" style="font-weight: 500;">
+                                    {% if task.isDone %}
+                                        <span class="glyphicon glyphicon-repeat text-warning"></span>
+                                        Réouvrir
+                                    {% else %}
+                                        <span class="glyphicon glyphicon-ok text-success"></span>
+                                        Terminer
+                                    {% endif %}
+                                </button>
+                            </form>
+                            <!-- Edit Button -->
+                            <a href="{{ path('task_edit', {'id' : task.id }) }}" class="btn btn-warning btn-sm" style="font-weight: 500;">
+                                <span class="glyphicon glyphicon-pencil"></span>
+                                Modifier
+                            </a>
+                            <!-- Delete Button (Checked against security Voter) -->
+                            {% if is_granted('delete', task) %}
+                                <form action="{{ path('task_delete', {'id' : task.id}) }}" method="POST" style="margin: 0; display: inline-block;" onsubmit="return confirm('Are you sure you want to delete this task?');">
+                                    <button class="btn btn-link btn-sm text-danger" style="color: #d9534f; padding-left: 5px; padding-right: 5px; text-decoration: none;">
+                                        <span class="glyphicon glyphicon-trash"></span>
+                                        Supprimer
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <!-- Fallback design when no tasks are recorded -->
+                <div class="col-xs-12">
+                    <div class="alert alert-warning text-center" role="alert" style="padding: 40px; border-radius: 6px;">
+                        <p style="font-size: 16px; margin-bottom: 20px;">
+                            Aucune tâche n'a encore été enregistrée. Créez votre première tâche pour commencer à organiser vos activités !
+                        </p>
+                        <a href="{{ path('task_create') }}" class="btn btn-warning btn-lg">
+                            <span class="glyphicon glyphicon-plus"></span>
+                            Créer votre première tâche
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endblock %}
+
+    
