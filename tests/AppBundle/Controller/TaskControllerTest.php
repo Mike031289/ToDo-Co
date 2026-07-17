@@ -97,7 +97,7 @@ class TaskControllerTest extends WebTestCase
         // 4. Verify that he is redirected (302) to the list page
         $this->assertEquals(302, $client->getResponse()->getStatusCode());
 
-        $crawler = $client->followRedirect();
+        $client->followRedirect();
         $this->assertContains('La tâche a bien été supprimée.', $client->getResponse()->getContent());
     }
 }

@@ -60,6 +60,8 @@ class TaskVoter extends Voter
     /**
      * Perform a single access check operation on a given attribute, subject and token.
      *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     *
      * @param string $attribute
      * @param Task $subject
      * @param TokenInterface $token
