@@ -12,3 +12,7 @@ services:
           arguments: ['@security.access.decision_manager']
           tags:
               - { name: security.voter }
+
+      app.access_denied_handler:
+        class: AppBundle\Security\AccessDeniedHandler
+        arguments: ['@twig', '%kernel.debug%']
