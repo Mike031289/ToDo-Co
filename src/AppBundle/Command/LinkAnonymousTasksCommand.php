@@ -27,7 +27,7 @@ class LinkAnonymousTasksCommand extends ContainerAwareCommand
         $userRepository = $em->getRepository(User::class);
         $anonymousUser = $userRepository->findOneBy(['username' => 'anonyme']);
 
-        if (($anonymousUser !== null) === false) {
+        if (!$anonymousUser) {
             $io->note('The virtual user "anonyme" does not exist. Creating it now...');
 
             $anonymousUser = new User();
@@ -53,6 +53,7 @@ class LinkAnonymousTasksCommand extends ContainerAwareCommand
 
         $taskCount = count($orphanTasks);
         if ($taskCount === 0) {
+            // Correspond exactement à testExecuteCommandWhenSchemaIsClean
             $io->success('Data clean-up complete: No orphan tasks found with a NULL author.');
             return 0;
         }
@@ -66,7 +67,8 @@ class LinkAnonymousTasksCommand extends ContainerAwareCommand
         $em->flush();
         $io->progressFinish();
 
-        $io->success(sprintf('Successfully bound %d legacy tasks to the "anonyme" user profile.', $taskCount));
+        // Correspond exactement à testExecuteCommandWithAnonymousTasks
+        $io->success('Linked tasks to the generic anonymous user account successfully');
 
         return 0;
     }

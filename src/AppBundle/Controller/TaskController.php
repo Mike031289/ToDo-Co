@@ -77,7 +77,7 @@ class TaskController extends Controller
      * @param Request $request
      * @return RedirectResponse|Response
      */
-    public function editAction(Task $task, Request $request)
+    public function editAction(Request $request, Task $task)
     {
         // Save the original user before handling the request
         $originalUser = $task->getUser();
