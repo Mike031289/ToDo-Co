@@ -22,6 +22,9 @@
         <directory>src/*Bundle/Tests</directory>
         <directory>src/*/*Bundle/Resources</directory>
         <directory>src/*/*Bundle/Tests</directory>
+
+        <directory>src/AppBundle/DataFixtures</directory>
+        <file>src/AppBundle/AppKernel.php</file>
       </exclude>
     </whitelist>
   </filter>
