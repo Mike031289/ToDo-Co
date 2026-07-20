@@ -10,25 +10,46 @@ use Twig\Environment;
 
 class AccessDeniedHandler implements AccessDeniedHandlerInterface
 {
+    /**
+     * @var Environment
+     */
     private $twig;
+
+    /**
+     * @var bool
+     */
     private $debug;
 
-    // On récupère le paramètre debug ici
+    /**
+     * AccessDeniedHandler constructor.
+     *
+     * @param Environment $twig
+     * @param bool        $debug
+     */
     public function __construct(Environment $twig, $debug)
     {
         $this->twig = $twig;
         $this->debug = $debug;
     }
 
+    /**
+     * {@inheritdoc}
+     *
+     * @param Request $request The request (unused due to interface contract)
+     * @param AccessDeniedException $accessDeniedException The execution exception
+     *
+     * @return Response|null
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
     public function handle(Request $request, AccessDeniedException $accessDeniedException)
     {
-        // SI ON EST EN MODE DEV/DEBUG : On ne fait rien !
-        // En retournant null, on dit à Symfony de continuer son comportement par défaut (afficher la page orange)
-        if ($this->debug) {
+        // Strict type comparison to comply with clean code standards
+        if ($this->debug === true) {
             return null;
         }
 
-        // SI ON EST EN PROD : On affiche ta page d'erreur personnalisée
+        // Render the custom 403 corporate identity error page for production environment
         $content = $this->twig->render('@Twig/Exception/error403.html.twig', [
             'status_code' => 403,
             'status_text' => 'Forbidden',
