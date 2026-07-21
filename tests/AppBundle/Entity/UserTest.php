@@ -119,21 +119,23 @@ class UserTest extends TestCase
 
     /**
      * Test the tasks collection getter and relationship mechanics.
+     *
+     * @return void
      */
     public function testGetTasksCollection()
     {
         $user = new User();
         $task = new Task();
 
-        // 1. Vérifie que c'est bien une instance d'ArrayCollection au départ
+        // 1. Verify that the collection is initialized as a Doctrine ArrayCollection
         $this->assertInstanceOf(\Doctrine\Common\Collections\Collection::class, $user->getTasks());
         $this->assertCount(0, $user->getTasks());
 
-        // 2. Si tu as les méthodes addTask/removeTask, testons le flux complet
+        // 2. Test the add and contains pipeline if the method exists on the entity
         if (method_exists($user, 'addTask')) {
             $user->addTask($task);
             $this->assertCount(1, $user->getTasks());
-            $this->assertTrue($user->getTasks()->contains($task));
+            $this->assertSame(true, $user->getTasks()->contains($task));
         }
     }
 }

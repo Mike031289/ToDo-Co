@@ -28,13 +28,13 @@ jobs:
           --health-retries=3
 
     steps:
-      # 1. Checkout the repository code using full commit SHA pinning for security compliance
+      # 1. Checkout the repository code
       - name: Checkout Code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@v4
 
-      # 2. Setup PHP Environment with full commit SHA pinning to prevent third-party action tampering
+      # 2. Setup PHP Environment with required extensions and tools for Symfony 3.4
       - name: Setup PHP Environment
-        uses: shivammathur/setup-php@c71f9cf19a00a2023cb3c20c02fb36d36e2f694e # v2.32.0
+        uses: shivammathur/setup-php@v2
         with:
           php-version: '7.4'
           extensions: mbstring, xml, ctype, iconv, pdo, pdo_mysql, mysqli

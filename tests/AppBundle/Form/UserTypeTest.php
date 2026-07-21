@@ -6,7 +6,7 @@ use AppBundle\Form\UserType;
 use AppBundle\Entity\User;
 use Symfony\Component\Form\Test\TypeTestCase;
 use Symfony\Component\Form\Extension\Validator\ValidatorExtension;
-use Symfony\Component\Validator\Validation;
+use Symfony\Component\Validator\ValidatorBuilder;
 
 /**
  * Class UserTypeTest
@@ -19,11 +19,14 @@ class UserTypeTest extends TypeTestCase
     /**
      * Register the ValidatorExtension to support validation options like 'invalid_message'.
      *
+     * Instantiates the ValidatorBuilder directly to avoid static access analyzer warnings.
+     *
      * @return array
      */
     protected function getExtensions()
     {
-        $validator = Validation::createValidator();
+        $validatorBuilder = new ValidatorBuilder();
+        $validator = $validatorBuilder->getValidator();
 
         return [
             new ValidatorExtension($validator),
@@ -32,6 +35,8 @@ class UserTypeTest extends TypeTestCase
 
     /**
      * Test form submission with valid data mapping to the User entity.
+     *
+     * @return void
      */
     public function testSubmitValidData()
     {
@@ -55,7 +60,11 @@ class UserTypeTest extends TypeTestCase
 
         $form->submit($formData);
 
-        $this->assertTrue($form->isSynchronized(), 'FAILED: Data transformation failed within UserType lifecycle.');
+        $this->assertSame(
+            true,
+            $form->isSynchronized(),
+            'FAILED: Data transformation failed within UserType lifecycle.'
+        );
 
         $this->assertEquals($expectedObject->getUsername(), $objectToCompare->getUsername());
         $this->assertEquals($expectedObject->getPassword(), $objectToCompare->getPassword());
@@ -65,7 +74,11 @@ class UserTypeTest extends TypeTestCase
         $children = $view->children;
 
         foreach (array_keys($formData) as $key) {
-            $this->assertArrayHasKey($key, $children, sprintf('FAILED: Form view configuration lacks the "%s" field child key.', $key));
+            $this->assertArrayHasKey(
+                $key,
+                $children,
+                sprintf('FAILED: Form view configuration lacks the "%s" field child key.', $key)
+            );
         }
     }
 }

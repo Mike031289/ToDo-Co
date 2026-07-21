@@ -49,7 +49,7 @@ class TaskController extends Controller
 
         $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
+        if ($form->isSubmitted() === true && $form->isValid() === true) {
             $em = $this->getDoctrine()->getManager();
 
             // Automandatory binding: Link the logged-in user to the created task
@@ -85,7 +85,7 @@ class TaskController extends Controller
         $form = $this->createForm(TaskType::class, $task);
         $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
+        if ($form->isSubmitted() === true && $form->isValid() === true) {
             // Enforce immutability: bypass any falsified request data by restoring the original user
             $task->setUser($originalUser);
 
