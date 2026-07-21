@@ -30,6 +30,21 @@ class UserControllerTest extends WebTestCase
         /** @var User $admin */
         $admin = $em->getRepository(User::class)->findOneBy(['username' => 'AdminUserControllerTest']);
 
+        // Safe fallback in case database was cleared before test execution
+        if (null === $admin) {
+            $admin = new User();
+            $admin->setUsername('AdminUserControllerTest');
+            $admin->setEmail('admin_user_controller_test@example.com');
+            $admin->setRoles(['ROLE_ADMIN']);
+
+            $encoder = $container->get('security.password_encoder');
+            $hashedPassword = $encoder->encodePassword($admin, 'adminpassword123');
+            $admin->setPassword($hashedPassword);
+
+            $em->persist($admin);
+            $em->flush();
+        }
+
         // Define firewall context name (must match your main firewall key in security.yml, usually 'main')
         $firewallContext = 'main';
 
@@ -54,7 +69,7 @@ class UserControllerTest extends WebTestCase
 
         $admin = $em->getRepository(User::class)->findOneBy(['username' => 'AdminUserControllerTest']);
 
-        if ($admin === false) {
+        if (null === $admin) {
             $admin = new User();
             $admin->setUsername('AdminUserControllerTest');
             $admin->setEmail('admin_user_controller_test@example.com');

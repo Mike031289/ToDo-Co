@@ -63,7 +63,7 @@ class TaskControllerTest extends WebTestCase
         $client->submit($form);
 
         // If validation fails, dump the HTML response content to inspect form errors
-        if ($client->getResponse()->isRedirect() === false) {
+        if (false === $client->getResponse()->isRedirect()) {
             fwrite(STDERR, "\n[FORM ERROR IN testCreateTaskSuccess]:\n" . $client->getResponse()->getContent() . "\n");
         }
 
@@ -103,7 +103,7 @@ class TaskControllerTest extends WebTestCase
         $client->submit($form);
 
         // If submission fails, dump the HTML payload to identify constraints violations
-        if (!$client->getResponse()->isRedirect()) {
+        if (false === $client->getResponse()->isRedirect()) {
             fwrite(STDERR, "\n[FORM ERROR IN testEditTask]:\n" . $client->getResponse()->getContent() . "\n");
         }
 
@@ -128,7 +128,7 @@ class TaskControllerTest extends WebTestCase
         $task->setTitle('Toggle Status Task');
         $task->setContent('Content.');
         $task->setUser($jean);
-        $task->setIsDone(false);
+        $task->toggle(false);
         $em->persist($task);
         $em->flush();
 
