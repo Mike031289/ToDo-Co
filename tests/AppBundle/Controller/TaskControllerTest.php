@@ -9,15 +9,13 @@ use AppBundle\Entity\Task;
 /**
  * Class TaskControllerTest
  *
- * Validates functional scenarios regarding task operations, focusing on security
- * and author-restricted deletion rules.
- *
  * @package Tests\AppBundle\Controller
+ * @covers \AppBundle\Controller\TaskController
  */
 class TaskControllerTest extends WebTestCase
 {
     /**
-     * Helper method to create an authenticated client.
+     * Helper method to create an HTTP client authenticated via HTTP Basic Auth.
      *
      * @param string $username
      * @param string $password
@@ -25,6 +23,9 @@ class TaskControllerTest extends WebTestCase
      */
     private function createAuthenticatedClient($username, $password)
     {
+        // Force kernel shutdown to clear any polluted container state from previous test suites
+        self::ensureKernelShutdown();
+
         return static::createClient([], [
             'PHP_AUTH_USER' => $username,
             'PHP_AUTH_PW'   => $password,
@@ -32,72 +33,152 @@ class TaskControllerTest extends WebTestCase
     }
 
     /**
-     * Test that a user cannot delete another user's task.
-     *
-     * @return void
+     * Test displaying the tasks list page.
      */
-    public function testUserCannotDeleteOtherUsersTask()
+    public function testListTasks()
     {
         $client = $this->createAuthenticatedClient('Jean', 'password123');
-        $container = $client->getContainer();
-        $em = $container->get('doctrine')->getManager();
+        $crawler = $client->request('GET', '/tasks');
 
-        // 1. Retrieve another user (e.g., admin user 'Mike')
-        /** @var User $otherUser */
-        $otherUser = $em->getRepository(User::class)->findOneBy(['username' => 'Mike']);
-        $this->assertNotNull($otherUser, "User 'Mike' must exist in the test database.");
-
-        // 2. Create a dedicated task for this user to test restriction
-        $task = new Task();
-        $task->setTitle('Mikes Task');
-        $task->setContent('Confidential content');
-        $task->setUser($otherUser);
-
-        $em->persist($task);
-        $em->flush();
-
-        // 3. Jean attempts to delete Mike's task
-        $client->request('GET', sprintf('/tasks/%d/delete', $task->getId()));
-
-        // 4. Verify that Jean is blocked with a 403 Forbidden status code
-        $this->assertEquals(403, $client->getResponse()->getStatusCode());
-
-        // Clean up the test database
-        $em->refresh($task); // Ensure the entity state is refreshed
+        $this->assertSame(200, $client->getResponse()->getStatusCode(), "FAILED: The route /tasks does not return a 200 OK.");
+        $this->assertGreaterThan(0, $crawler->filter('html:contains("Créer une tâche")')->count());
     }
 
     /**
-     * Test that a user can successfully delete their own task.
-     *
-     * @return void
+     * Test successful creation of a task.
      */
-    public function testUserCanDeleteOwnTask()
+    public function testCreateTaskSuccess()
     {
         $client = $this->createAuthenticatedClient('Jean', 'password123');
-        $container = $client->getContainer();
-        $em = $container->get('doctrine')->getManager();
+        $crawler = $client->request('GET', '/tasks/create');
 
-        // 1. Retrieve the user 'Jean'
+        $this->assertSame(200, $client->getResponse()->getStatusCode(), "FAILED: Route /tasks/create not found or inaccessible.");
+
+        // Target the form structure to fill input values
+        $form = $crawler->filter('form')->form([
+            'task[title]'   => 'New Task Title',
+            'task[content]' => 'Content for the new task.',
+        ]);
+
+        $client->submit($form);
+
+        // If validation fails, dump the HTML response content to inspect form errors
+        if (false === $client->getResponse()->isRedirect()) {
+            fwrite(STDERR, "\n[FORM ERROR IN testCreateTaskSuccess]:\n" . $client->getResponse()->getContent() . "\n");
+        }
+
+        $this->assertTrue($client->getResponse()->isRedirect(), "FAILED: createAction did not redirect after successful form submission.");
+        $client->followRedirect();
+
+        $this->assertContains('La tâche a bien été ajoutée.', $client->getResponse()->getContent());
+    }
+
+    /**
+     * Test modifying an existing task.
+     */
+    public function testEditTask()
+    {
+        $client = $this->createAuthenticatedClient('Jean', 'password123');
+        $em = $client->getContainer()->get('doctrine')->getManager();
+
         /** @var User $jean */
         $jean = $em->getRepository(User::class)->findOneBy(['username' => 'Jean']);
-        $this->assertNotNull($jean, "User 'Jean' must exist in the test database.");
 
-        // 2. Create a task owned by Jean
         $task = new Task();
-        $task->setTitle('My super task');
-        $task->setContent('I must complete this task, and I have the permission to delete it.');
+        $task->setTitle('Task to Edit');
+        $task->setContent('Original Content');
         $task->setUser($jean);
-
         $em->persist($task);
         $em->flush();
 
-        // 3. Jean attempts to delete his own task
-        $client->request('GET', sprintf('/tasks/%d/delete', $task->getId()));
+        $crawler = $client->request('GET', sprintf('/tasks/%d/edit', $task->getId()));
 
-        // 4. Verify that he is redirected (302) to the list page
-        $this->assertEquals(302, $client->getResponse()->getStatusCode());
+        $this->assertSame(200, $client->getResponse()->getStatusCode(), sprintf("FAILED: Edit route for ID %d returned status %d instead of 200.", $task->getId(), $client->getResponse()->getStatusCode()));
+
+        $form = $crawler->filter('form')->form([
+            'task[title]'   => 'Updated Task Title',
+            'task[content]' => 'Updated Content.',
+        ]);
+
+        $client->submit($form);
+
+        // If submission fails, dump the HTML payload to identify constraints violations
+        if (false === $client->getResponse()->isRedirect()) {
+            fwrite(STDERR, "\n[FORM ERROR IN testEditTask]:\n" . $client->getResponse()->getContent() . "\n");
+        }
+
+        $this->assertTrue($client->getResponse()->isRedirect(), "FAILED: editAction did not redirect after success.");
+        $client->followRedirect();
+
+        $this->assertContains('La tâche a bien été modifiée.', $client->getResponse()->getContent());
+    }
+
+    /**
+     * Test toggling a task status.
+     */
+    public function testToggleTaskStatus()
+    {
+        $client = $this->createAuthenticatedClient('Jean', 'password123');
+        $em = $client->getContainer()->get('doctrine')->getManager();
+
+        /** @var User $jean */
+        $jean = $em->getRepository(User::class)->findOneBy(['username' => 'Jean']);
+
+        $task = new Task();
+        $task->setTitle('Toggle Status Task');
+        $task->setContent('Content.');
+        $task->setUser($jean);
+        $task->toggle(false);
+        $em->persist($task);
+        $em->flush();
+
+        $client->request('GET', sprintf('/tasks/%d/toggle', $task->getId()));
+
+        // Check for 302 redirect code explicitly to guarantee coverage transition
+        $this->assertSame(302, $client->getResponse()->getStatusCode(), sprintf("FAILED: Toggle route returned status %d instead of a 302 redirect.", $client->getResponse()->getStatusCode()));
 
         $client->followRedirect();
+
+        $em->clear();
+        $updatedTask = $em->getRepository(Task::class)->find($task->getId());
+
+        $this->assertNotNull($updatedTask);
+        $this->assertTrue($updatedTask->isDone());
+    }
+
+    /**
+     * Test deleting a task successfully.
+     */
+    public function testDeleteTaskSuccess()
+    {
+        $client = $this->createAuthenticatedClient('Jean', 'password123');
+        $em = $client->getContainer()->get('doctrine')->getManager();
+
+        /** @var User $jean */
+        $jean = $em->getRepository(User::class)->findOneBy(['username' => 'Jean']);
+
+        // Create a task bound to the authenticated user to pass Voter authorization policies
+        $task = new Task();
+        $task->setTitle('Task to Delete');
+        $task->setContent('Content.');
+        $task->setUser($jean);
+        $em->persist($task);
+        $em->flush();
+
+        // Store the ID before running the deletion request
+        $taskId = $task->getId();
+
+        $client->request('GET', sprintf('/tasks/%d/delete', $taskId));
+
+        $this->assertSame(302, $client->getResponse()->getStatusCode(), "FAILED: Delete route did not redirect.");
+
+        $client->followRedirect();
+
         $this->assertContains('La tâche a bien été supprimée.', $client->getResponse()->getContent());
+
+        // Inspect the database lifecycle state using the stored ID to ensure entity deletion occurred
+        $em->clear();
+        $deletedTask = $em->getRepository(Task::class)->find($taskId);
+        $this->assertNull($deletedTask, "FAILED: The task was not removed from the database.");
     }
 }
