@@ -1,6 +1,6 @@
 name: Symfony 3.4 CI Pipeline
 
-# Trigger the workflow on push or pull requests for the develop and main branches
+# Trigger the workflow on push or pull requests for the develop, main, and master branches
 on:
   push:
     branches: [ develop, main, master ]
@@ -18,7 +18,7 @@ jobs:
         image: mysql:5.7
         env:
           MYSQL_ALLOW_EMPTY_PASSWORD: 'yes' # Allows root connection with no password
-          MYSQL_DATABASE: todoco_db          # Matches your local database name
+          MYSQL_DATABASE: todoco_db          # Matches your test database name
         ports:
           - 3306:3306
         options: >-
@@ -28,20 +28,20 @@ jobs:
           --health-retries=3
 
     steps:
-      # 1. Checkout the repository code inside the runner
+      # 1. Checkout the repository code using full commit SHA pinning for security compliance
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      # 2. Setup PHP Environment with required extensions for Symfony 3.4
+      # 2. Setup PHP Environment with full commit SHA pinning to prevent third-party action tampering
       - name: Setup PHP Environment
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@c71f9cf19a00a2023cb3c20c02fb36d36e2f694e # v2.32.0
         with:
           php-version: '7.4'
           extensions: mbstring, xml, ctype, iconv, pdo, pdo_mysql, mysqli
           tools: composer:2.2
-          coverage: none # Disabled to optimize pipeline execution speed
+          coverage: none # Disabled to optimize execution speed
 
-      # 3. Validate composer.json syntax
+      # 3. Validate composer.json syntax and integrity
       - name: Validate Composer Configuration
         run: composer validate
 
@@ -49,8 +49,7 @@ jobs:
       - name: Install Dependencies
         run: composer install --prefer-dist --no-progress --no-suggest
 
-      # 5. Inject legacy Symfony 3.4 parameters into GitHub Environment
-      # This explicitly overrides your parameters.yml settings for the CI environment
+      # 5. Inject Symfony 3.4 parameters into GitHub Environment to override local settings
       - name: Configure Test Environment Variables
         run: |
           echo "DATABASE_URL=mysql://root:@127.0.0.1:3306/todoco_db" >> $GITHUB_ENV
@@ -60,16 +59,16 @@ jobs:
           echo "SYMFONY__DATABASE_USER=root" >> $GITHUB_ENV
           echo "SYMFONY__DATABASE_PASSWORD=" >> $GITHUB_ENV
 
-      # 6. Build the database schema using Doctrine commands
+      # 6. Build the database schema using Doctrine console commands
       - name: Initialize Database and Schema
         run: |
           php bin/console doctrine:database:create --env=test --if-not-exists
           php bin/console doctrine:schema:update --env=test --force
 
-      # 7. Hydrate the database with development/test fixtures
+      # 7. Hydrate the isolated database with fixtures
       - name: Load Test Fixtures
         run: php bin/console doctrine:fixtures:load --env=test -n
 
-      # 8. Execute the Test Suite via the standardized vendor binary
+      # 8. Execute the automated test suite
       - name: Run Automated Test Suite
         run: vendor/bin/phpunit
