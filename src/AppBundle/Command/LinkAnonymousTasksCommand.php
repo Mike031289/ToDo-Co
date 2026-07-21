@@ -27,7 +27,7 @@ class LinkAnonymousTasksCommand extends ContainerAwareCommand
         $userRepository = $em->getRepository(User::class);
         $anonymousUser = $userRepository->findOneBy(['username' => 'anonyme']);
 
-        if (!$anonymousUser) {
+        if ($anonymousUser === null) {
             $io->note('The virtual user "anonyme" does not exist. Creating it now...');
 
             $anonymousUser = new User();

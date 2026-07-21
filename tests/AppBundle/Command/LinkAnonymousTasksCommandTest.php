@@ -5,28 +5,73 @@ namespace Tests\AppBundle\Command;
 use AppBundle\Command\LinkAnonymousTasksCommand;
 use AppBundle\Entity\Task;
 use AppBundle\Entity\User;
+use Doctrine\Common\Persistence\ManagerRegistry;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
-use Symfony\Bundle\FrameworkBundle\Console\Application;
-use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Tester\CommandTester;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 
-class LinkAnonymousTasksCommandTest extends KernelTestCase
+class LinkAnonymousTasksCommandTest extends TestCase
 {
+    /**
+     * Helper to build a Doctrine ManagerRegistry mock that returns our EntityManager mock.
+     *
+     * @param EntityManagerInterface $entityManager
+     * @return ManagerRegistry|MockObject
+     */
+    private function createDoctrineRegistryMock(EntityManagerInterface $entityManager)
+    {
+        /** @var ManagerRegistry|MockObject $doctrine */
+        $doctrine = $this->createMock(ManagerRegistry::class);
+        $doctrine->method('getManager')->willReturn($entityManager);
+
+        return $doctrine;
+    }
+
     /**
      * Test the CLI command behavior when data is already clean.
      */
     public function testExecuteCommandWhenSchemaIsClean()
     {
-        self::bootKernel();
+        $userMock = $this->createMock(User::class);
 
-        $application = new Application(self::$kernel);
-        $application->add(new LinkAnonymousTasksCommand());
+        /** @var EntityRepository|MockObject $userRepository */
+        $userRepository = $this->createMock(EntityRepository::class);
+        $userRepository->method('findOneBy')->with(['username' => 'anonyme'])->willReturn($userMock);
 
-        $command = $application->find('app:tasks:link-anonymous');
+        /** @var EntityRepository|MockObject $taskRepository */
+        $taskRepository = $this->createMock(EntityRepository::class);
+        $taskRepository->method('findBy')->with(['user' => null])->willReturn([]);
+
+        /** @var EntityManagerInterface|MockObject $entityManager */
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->method('getRepository')->willReturnMap([
+            [User::class, $userRepository],
+            [Task::class, $taskRepository],
+        ]);
+
+        $doctrineRegistry = $this->createDoctrineRegistryMock($entityManager);
+
+        /** @var ContainerInterface|MockObject $container */
+        $container = $this->createMock(ContainerInterface::class);
+        $container->method('get')->willReturnCallback(function ($serviceName) use ($entityManager, $doctrineRegistry) {
+            if ($serviceName === 'doctrine.orm.entity_manager') {
+                return $entityManager;
+            }
+            if ($serviceName === 'doctrine') {
+                return $doctrineRegistry;
+            }
+            return null;
+        });
+
+        $command = new LinkAnonymousTasksCommand();
+        $command->setContainer($container);
+
         $commandTester = new CommandTester($command);
-        $commandTester->execute(['command' => $command->getName()]);
+        $commandTester->execute([]);
 
         $output = $commandTester->getDisplay();
 
@@ -39,21 +84,18 @@ class LinkAnonymousTasksCommandTest extends KernelTestCase
      */
     public function testExecuteCommandWithAnonymousTasks()
     {
-        self::bootKernel();
-        $container = self::$kernel->getContainer();
-
         $userMock = $this->createMock(User::class);
         $taskMock = $this->createMock(Task::class);
 
-        /** @var \PHPUnit\Framework\MockObject\MockObject|EntityRepository $userRepository */
+        /** @var EntityRepository|MockObject $userRepository */
         $userRepository = $this->createMock(EntityRepository::class);
         $userRepository->method('findOneBy')->with(['username' => 'anonyme'])->willReturn($userMock);
 
-        /** @var \PHPUnit\Framework\MockObject\MockObject|EntityRepository $taskRepository */
+        /** @var EntityRepository|MockObject $taskRepository */
         $taskRepository = $this->createMock(EntityRepository::class);
         $taskRepository->method('findBy')->with(['user' => null])->willReturn([$taskMock]);
 
-        /** @var \PHPUnit\Framework\MockObject\MockObject|EntityManagerInterface $entityManager */
+        /** @var EntityManagerInterface|MockObject $entityManager */
         $entityManager = $this->createMock(EntityManagerInterface::class);
         $entityManager->method('getRepository')->willReturnMap([
             [User::class, $userRepository],
@@ -63,14 +105,25 @@ class LinkAnonymousTasksCommandTest extends KernelTestCase
         $taskMock->expects($this->once())->method('setUser')->with($userMock);
         $entityManager->expects($this->once())->method('flush');
 
-        $container->set('doctrine.orm.default_entity_manager', $entityManager);
+        $doctrineRegistry = $this->createDoctrineRegistryMock($entityManager);
 
-        $application = new Application(self::$kernel);
-        $application->add(new LinkAnonymousTasksCommand());
+        /** @var ContainerInterface|MockObject $container */
+        $container = $this->createMock(ContainerInterface::class);
+        $container->method('get')->willReturnCallback(function ($serviceName) use ($entityManager, $doctrineRegistry) {
+            if ($serviceName === 'doctrine.orm.entity_manager') {
+                return $entityManager;
+            }
+            if ($serviceName === 'doctrine') {
+                return $doctrineRegistry;
+            }
+            return null;
+        });
 
-        $command = $application->find('app:tasks:link-anonymous');
+        $command = new LinkAnonymousTasksCommand();
+        $command->setContainer($container);
+
         $commandTester = new CommandTester($command);
-        $commandTester->execute(['command' => $command->getName()]);
+        $commandTester->execute([]);
 
         $output = $commandTester->getDisplay();
 
@@ -80,63 +133,69 @@ class LinkAnonymousTasksCommandTest extends KernelTestCase
 
     /**
      * Test the CLI command when the virtual "anonyme" user does not exist yet.
-     * This hits the initialization block and spikes code coverage.
      */
     public function testExecuteCommandCreatesVirtualUserWhenMissing()
     {
-        self::bootKernel();
-        $container = self::$kernel->getContainer();
+        $taskMock = $this->createMock(Task::class);
 
-        // 1. Setup repo mock to return NULL (user doesn't exist)
-        /** @var \PHPUnit\Framework\MockObject\MockObject|EntityRepository $userRepository */
+        /** @var EntityRepository|MockObject $userRepository */
         $userRepository = $this->createMock(EntityRepository::class);
         $userRepository->method('findOneBy')->with(['username' => 'anonyme'])->willReturn(null);
 
-        /** @var \PHPUnit\Framework\MockObject\MockObject|EntityRepository $taskRepository */
+        /** @var EntityRepository|MockObject $taskRepository */
         $taskRepository = $this->createMock(EntityRepository::class);
-        $taskRepository->method('findBy')->with(['user' => null])->willReturn([]);
+        $taskRepository->method('findBy')->with(['user' => null])->willReturn([$taskMock]);
 
-        // 2. Mock Encoder service required inside the creation block
-        /** @var \PHPUnit\Framework\MockObject\MockObject|UserPasswordEncoderInterface $encoder */
+        /** @var UserPasswordEncoderInterface|MockObject $encoder */
         $encoder = $this->createMock(UserPasswordEncoderInterface::class);
         $encoder->method('encodePassword')->willReturn('hashed_password_mock');
-        $container->set('security.password_encoder', $encoder);
 
-        // 3. Setup Entity Manager Mock to intercept persists
-        /** @var \PHPUnit\Framework\MockObject\MockObject|EntityManagerInterface $entityManager */
+        /** @var EntityManagerInterface|MockObject $entityManager */
         $entityManager = $this->createMock(EntityManagerInterface::class);
-        $entityManager->method('getRepository')->willReturnMap([
-            [User::class, $userRepository],
-            [Task::class, $taskRepository],
-        ]);
 
-        // We expect the command to save the new user
-        $entityManager->expects($this->once())->method('persist')->with($this->isInstanceOf(User::class));
-        $entityManager->expects($this->once())->method('flush');
+        $entityManager->method('getRepository')->willReturnCallback(function ($entityName) use ($userRepository, $taskRepository) {
+            if ($entityName === User::class || $entityName === 'AppBundle:User') {
+                return $userRepository;
+            }
+            if ($entityName === Task::class || $entityName === 'AppBundle:Task') {
+                return $taskRepository;
+            }
+            return null;
+        });
 
-        $container->set('doctrine.orm.default_entity_manager', $entityManager);
+        $entityManager->expects($this->once())
+            ->method('persist')
+            ->with($this->isInstanceOf(User::class));
 
-        // 4. Run command
-        $application = new Application(self::$kernel);
-        $application->add(new LinkAnonymousTasksCommand());
+        $entityManager->expects($this->atLeastOnce())
+            ->method('flush');
 
-        $command = $application->find('app:tasks:link-anonymous');
+        $doctrineRegistry = $this->createDoctrineRegistryMock($entityManager);
+
+        /** @var ContainerInterface|MockObject $container */
+        $container = $this->createMock(ContainerInterface::class);
+        $container->method('get')->willReturnCallback(function ($serviceName) use ($entityManager, $encoder, $doctrineRegistry) {
+            if ($serviceName === 'doctrine.orm.entity_manager') {
+                return $entityManager;
+            }
+            if ($serviceName === 'doctrine') {
+                return $doctrineRegistry;
+            }
+            if ($serviceName === 'security.password_encoder') {
+                return $encoder;
+            }
+            return null;
+        });
+
+        $command = new LinkAnonymousTasksCommand();
+        $command->setContainer($container);
+
         $commandTester = new CommandTester($command);
-        $commandTester->execute(['command' => $command->getName()]);
+        $commandTester->execute([]);
 
         $output = $commandTester->getDisplay();
 
-        // 5. Assertions
         $this->assertSame(0, $commandTester->getStatusCode());
         $this->assertStringContainsString('Virtual user "anonyme" created successfully.', $output);
-    }
-
-    /**
-     * Clean up the service container after each test execution.
-     */
-    protected function tearDown()
-    {
-        parent::tearDown();
-        self::ensureKernelShutdown();
     }
 }

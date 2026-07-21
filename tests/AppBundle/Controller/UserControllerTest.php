@@ -54,7 +54,7 @@ class UserControllerTest extends WebTestCase
 
         $admin = $em->getRepository(User::class)->findOneBy(['username' => 'AdminUserControllerTest']);
 
-        if (!$admin) {
+        if ($admin === false) {
             $admin = new User();
             $admin->setUsername('AdminUserControllerTest');
             $admin->setEmail('admin_user_controller_test@example.com');

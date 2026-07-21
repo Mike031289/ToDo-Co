@@ -132,7 +132,7 @@ class UserTest extends TestCase
         $this->assertCount(0, $user->getTasks());
 
         // 2. Test the add and contains pipeline if the method exists on the entity
-        if (method_exists($user, 'addTask')) {
+        if (method_exists($user, 'addTask') === true) {
             $user->addTask($task);
             $this->assertCount(1, $user->getTasks());
             $this->assertSame(true, $user->getTasks()->contains($task));

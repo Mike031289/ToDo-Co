@@ -63,7 +63,7 @@ class TaskControllerTest extends WebTestCase
         $client->submit($form);
 
         // If validation fails, dump the HTML response content to inspect form errors
-        if (!$client->getResponse()->isRedirect()) {
+        if ($client->getResponse()->isRedirect() === false) {
             fwrite(STDERR, "\n[FORM ERROR IN testCreateTaskSuccess]:\n" . $client->getResponse()->getContent() . "\n");
         }
 
