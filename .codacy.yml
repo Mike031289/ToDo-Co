@@ -1,0 +1,7 @@
+---
+ignore_paths:
+  - 'var/**'
+  - 'web/config.php'
+  - 'web/app_dev.php'
+  - 'web/css/shop-homepage.css'
+  - 'composer.lock'

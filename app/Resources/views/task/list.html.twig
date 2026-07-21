@@ -67,7 +67,7 @@
                                 <span class="glyphicon glyphicon-user"></span>
                                 Créé par :
                                 <strong>
-                                    {{ task.user ? task.user.username : 'Anonyme' }}
+                                    {{ task.user ? task.user.username :'Anonyme' }}
                                 </strong>
                             </div>
                         </div>
@@ -118,5 +118,3 @@
             {% endfor %}
         </div>
     {% endblock %}
-
-    

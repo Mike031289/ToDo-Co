@@ -11,7 +11,7 @@ class SecurityController extends Controller
     /**
      * @Route("/login", name="login")
      */
-    public function loginAction(Request $request)
+    public function loginAction()
     {
         $authenticationUtils = $this->get('security.authentication_utils');
 
@@ -34,9 +34,11 @@ class SecurityController extends Controller
 
     /**
      * @Route("/logout", name="logout")
+     * @throws \RuntimeException
      */
     public function logoutCheck()
     {
-        // This code is never executed.
+        throw new \RuntimeException('Symfony security firewall logout listener interception failure.');
     }
+
 }
