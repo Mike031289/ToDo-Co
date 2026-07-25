@@ -2,7 +2,7 @@
 
 **Projet :** ToDo & Co
 **Date d'audit :** Juillet 2026
-**Auteur :** Équipe de développement
+**Auteur :** Adjoukou AGBELOU (Revue et validé par le lead)
 **Statut du projet :** Prêt pour mise en production (Production Ready)
 
 ---
