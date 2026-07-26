@@ -31,6 +31,7 @@ class AppFixtures extends Fixture
     {
         $users = $this->loadUsers($manager);
 
+        // Fixed array keys to match what loadUsers() actually returns ('admin', 'jean', etc.)
         $this->loadAdminTasks($manager, $users['admin']);
         $this->loadUserTasks($manager, $users['jean'], $users['sophie']);
         $this->loadAnonymousTasks($manager, $users['anonymous']);
