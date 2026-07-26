@@ -1,4 +1,4 @@
-name: Symfony 5.4 CI Pipeline
+name: Symfony 3.4 CI Pipeline
 
 # Trigger the workflow on push or pull requests for the develop, main, and master branches
 on:
@@ -9,7 +9,7 @@ on:
 
 jobs:
   tests:
-    name: PHPUnit Tests (PHP 8.1)
+    name: PHPUnit Tests (PHP 7.4)
     runs-on: ubuntu-latest
 
     # Provision a containerized MySQL service for integration testing
@@ -32,13 +32,13 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 2. Setup PHP Environment with required extensions and tools for Symfony 5.4
+      # 2. Setup PHP Environment with required extensions and tools for Symfony 3.4
       - name: Setup PHP Environment
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'
-          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, mysqli
-          tools: composer:v2
+          php-version: '7.4'
+          extensions: mbstring, xml, ctype, iconv, pdo, pdo_mysql, mysqli
+          tools: composer:2.2
           coverage: none # Disabled to optimize execution speed
 
       # 3. Validate composer.json syntax and integrity
@@ -47,24 +47,27 @@ jobs:
 
       # 4. Install Project Dependencies using Composer
       - name: Install Dependencies
-        run: composer install --prefer-dist --no-progress
+        run: composer install --prefer-dist --no-progress --no-suggest
 
-      # 5. Inject Symfony 5.4 environment variables into GitHub Environment
+      # 5. Inject Symfony 3.4 parameters into GitHub Environment to override local settings
       - name: Configure Test Environment Variables
         run: |
-          echo "DATABASE_URL=mysql://root:@127.0.0.1:3306/todoco_db?serverVersion=5.7" >> $GITHUB_ENV
-          echo "APP_ENV=test" >> $GITHUB_ENV
+          echo "DATABASE_URL=mysql://root:@127.0.0.1:3306/todoco_db" >> $GITHUB_ENV
+          echo "SYMFONY__DATABASE_HOST=127.0.0.1" >> $GITHUB_ENV
+          echo "SYMFONY__DATABASE_PORT=3306" >> $GITHUB_ENV
+          echo "SYMFONY__DATABASE_NAME=todoco_db" >> $GITHUB_ENV
+          echo "SYMFONY__DATABASE_USER=root" >> $GITHUB_ENV
+          echo "SYMFONY__DATABASE_PASSWORD=" >> $GITHUB_ENV
 
       # 6. Build the database schema using Doctrine console commands
-      - name: Create Test Database and Load Fixtures
+      - name: Initialize Database and Schema
         run: |
-            php bin/console doctrine:database:create --env=test --if-not-exists
-            php bin/console doctrine:schema:update --env=test --force
-            php bin/console doctrine:fixtures:load --env=test --append -n
+          php bin/console doctrine:database:create --env=test --if-not-exists
+          php bin/console doctrine:schema:update --env=test --force
 
-      # 7. Hydrate the isolated database with fixtures (forced purge & load)
+      # 7. Hydrate the isolated database with fixtures
       - name: Load Test Fixtures
-        run: php bin/console doctrine:fixtures:load --env=test --purge-with-truncate
+        run: php bin/console doctrine:fixtures:load --env=test -n
 
       # 8. Execute the automated test suite
       - name: Run Automated Test Suite

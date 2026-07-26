@@ -1,26 +1,29 @@
 #!/usr/bin/env php
 <?php
 
-use App\Kernel;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Input\ArgvInput;
-use Symfony\Component\Dotenv\Dotenv;
-use Symfony\Component\ErrorHandler\Debug;
+use Symfony\Component\Debug\Debug;
 
-require dirname(__DIR__).'/vendor/autoload.php';
+// if you don't want to setup permissions the proper way, just uncomment the following PHP line
+// read http://symfony.com/doc/current/book/installation.html#configuration-and-setup for more information
+//umask(0000);
 
-if (!class_exists(Application::class)) {
-    throw new LogicException('You need to add "symfony/framework-bundle" as a Composer dependency.');
-}
+set_time_limit(0);
+
+/** @var Composer\Autoload\ClassLoader $loader */
+$loader = require __DIR__.'/../app/autoload.php';
 
 $input = new ArgvInput();
-$env = $input->getParameterOption(['--env', '-e'], null, true);
-$debug = !$input->hasParameterOption('--no-debug', true);
+$env = $input->getParameterOption(['--env', '-e'], getenv('SYMFONY_ENV') ?: 'dev');
+$debug = getenv('SYMFONY_DEBUG') !== '0' && !$input->hasParameterOption(['--no-debug', '']) && $env !== 'prod';
 
-if (class_exists(Dotenv::class) && (file_exists(dirname(__DIR__).'/.env') || file_exists(dirname(__DIR__).'/.env.local'))) {
-    (new Dotenv())->bootEnv(dirname(__DIR__).'/.env');
+if ($debug) {
+    Debug::enable();
+    // Disables the conversion of warnings and notices into blocking exceptions, which is the default behavior in debug mode. This allows you to see all errors and warnings in the console output without stopping the execution of the command.
+    ini_set('error_reporting', E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_WARNING);
 }
 
-$kernel = new Kernel($_SERVER['APP_ENV'] ?? 'dev', (bool) ($_SERVER['APP_DEBUG'] ?? true));
+$kernel = new AppKernel($env, $debug);
 $application = new Application($kernel);
 $application->run($input);
