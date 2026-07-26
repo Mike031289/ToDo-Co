@@ -1,89 +1,75 @@
 # ToDo & Co Application
 
-[![Symfony 5.4 CI Pipeline](https://github.com/Mike031289/ToDo-Co/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/Mike031289/ToDo-Co/actions/workflows/ci.yml)
+[![Symfony 3.4 CI Pipeline](https://github.com/Mike031289/ToDo-Co/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/Mike031289/ToDo-Co/actions/workflows/ci.yml)
 
-Base du projet **OpenClassrooms #8** : _Améliorez un projet existant_
+Base du projet #8 : Améliorez un projet existant
 https://openclassrooms.com/projects/ameliorer-un-projet-existant-1
 
 ---
 
-# 📝 About the Project
+## 📝 About The Project
 
 This repository is dedicated to the modernization of the **ToDo & Co** web application.
 
-The main objective of this project is to take over an existing legacy codebase (**Symfony 3.1 / PHP 5.5.9**), perform a thorough code quality audit, eliminate technical debt, and implement new technical requirements, including advanced user management, security policies, and a comprehensive automated testing suite using **PHPUnit**.
+The main objective of this project is to take over an existing legacy codebase (**Symfony 3.1 / PHP 5.5.9**), perform a thorough code quality audit, fix critical technical debt, and implement new technical requirements—including advanced user management, security policies, and an exhaustive automated testing suite (PHPUnit).
 
-## 🚀 Modernization Goals Achieved
+### 🚀 Modernization Goals Achieved
 
-- **Framework Upgrade:** Migrated the application from **Symfony 3.1** to **Symfony 5.4 LTS** and from **PHP 5.5.9** to **PHP 8.1**.
-- **Security Overhaul:** Introduced multi-level roles, secured task ownership, and protected sensitive actions using Symfony **Voters**.
-- **Quality Assurance:** Implemented an extensive automated test suite with **PHPUnit 9.6**, covering controllers, entities, forms, and business logic.
-- **CI/CD Pipeline:** Configured **GitHub Actions** to automatically run tests, static analysis, and coding standards validation on every push and pull request.
+- **Framework Upgrade:** Migrated the legacy application to **Symfony 3.4** and **PHP 7.4** to ensure stability and long-term dependency support.
+- **Security Overhaul:** Implemented multi-level roles, isolated task ownership, and resolved security vulnerabilities using Symfony **Voters**.
+- **Quality Assurance:** Built a comprehensive automated testing suite with **PHPUnit**, covering controllers, forms, and business logic.
+- **CI/CD Pipeline:** Integrated **GitHub Actions** for continuous integration, including automated tests, static analysis, and code style validation on every push.
 
 ---
 
-# 🛠️ Tech Stack
+## 🛠️ Tech Stack
 
 | Category                      | Technology                    |
-| ----------------------------- | ----------------------------- |
-| **Framework**                 | Symfony 5.4                   |
-| **Language**                  | PHP 8.1                       |
+| :---------------------------- | :---------------------------- |
+| **Framework**                 | Symfony 3.4                   |
+| **Language**                  | PHP 7.4                       |
 | **Database**                  | MySQL / MariaDB               |
-| **Testing**                   | PHPUnit 9.6                   |
+| **Testing**                   | PHPUnit                       |
 | **CI/CD**                     | GitHub Actions                |
 | **Static Analysis & Quality** | Codacy, PHPStan, PHP CS Fixer |
-| **Migration Tool**            | Rector (PHP 8.1 compatible)   |
-| **Debugging & Profiling**     | Xdebug 3.x                    |
 
 ---
 
-# 📖 Project Documentation
+## 📖 Project Documentation
 
-To simplify onboarding and long-term maintenance, the documentation is organized into dedicated guides.
+To make onboarding and maintenance as smooth as possible, the documentation is split into dedicated guides:
 
-## 📘 Installation & Contribution Guide (`CONTRIBUTING.md`)
+### 📘 Installation & Contribution Guide (`CONTRIBUTING.md`)
 
-This guide includes:
+- Step-by-step local setup instructions.
+- Database configuration and fixtures.
+- Git workflow (branch naming and Conventional Commits).
+- Commands to run the automated test suite.
 
-- Local installation instructions
-- Database configuration
-- Fixture loading
-- Git workflow (branch naming and Conventional Commits)
-- Commands for running the automated test suite
+### 🔐 Technical Security & Authentication (`doc/security.md`)
 
-## 🔐 Technical Security & Authentication (`doc/TECHNICAL_SECURITY.md`)
-
-This document describes:
-
-- Authentication architecture
-- Role hierarchy (`ROLE_USER` / `ROLE_ADMIN`)
-- Route-level authorization
-- Business authorization using `TaskVoter`
-- Demo accounts for testing
+- Authentication architecture overview.
+- Role hierarchy (`ROLE_USER` / `ROLE_ADMIN`).
+- Route-level authorization and `TaskVoter` rules.
+- Demo accounts for testing.
 
 ---
 
-# 🚦 Quick Start
+## 🚦 Quick Start (Local Setup)
 
-For complete installation instructions, see **CONTRIBUTING.md**.
+For complete installation instructions, refer to **CONTRIBUTING.md**.
 
-## 1. Install dependencies
+### 1. Install dependencies
 
 ```bash
 composer install
 ```
 
-## 2. Configure the database
+### 2. Configure the database
 
-Update your database connection settings in your `.env` file (or your local environment configuration).
+During installation, provide your local database credentials when `parameters.yml` is generated.
 
-Example:
-
-```dotenv
-DATABASE_URL="mysql://user:password@127.0.0.1:3306/todo"
-```
-
-## 3. Create the database and load fixtures
+### 3. Create the database and load fixtures
 
 ```bash
 php bin/console doctrine:database:create
@@ -91,7 +77,7 @@ php bin/console doctrine:schema:create
 php bin/console doctrine:fixtures:load --no-interaction
 ```
 
-## 4. Start the local server
+### 4. Start the local server
 
 ```bash
 php bin/console server:start
@@ -105,61 +91,35 @@ http://127.0.0.1:8000
 
 ---
 
-# 🧪 Running Tests & Code Coverage
+## 🧪 Running Tests
 
-## Run the complete test suite
+Run the complete automated test suite:
 
 ```bash
-vendor/bin/phpunit
+php bin/phpunit
 ```
 
-## Run a specific test class
-
-Task entity tests:
+Run a specific test file (example: Task controller security tests):
 
 ```bash
-vendor/bin/phpunit tests/Entity/TaskTest.php
-```
-
-Task controller tests:
-
-```bash
-vendor/bin/phpunit tests/Controller/TaskControllerTest.php
-```
-
-## Generate a code coverage report
-
-```bash
-php -d xdebug.mode=coverage vendor/bin/phpunit --coverage-text
+php bin/phpunit tests/AppBundle/Controller/TaskControllerTest.php
 ```
 
 ---
 
-# 📊 Quality Audit
+## 📊 Quality Audit
 
-Code quality is continuously monitored to ensure maintainability and compliance with Symfony best practices.
+Code quality is continuously monitored to keep the project maintainable and compliant with Symfony best practices.
 
-## ✅ Coding Standards
+### ✅ Coding Standards
 
-Coding style follows **PSR-12** and is automatically enforced using **PHP CS Fixer**.
+- PSR-12 compatibility enforced with **PHP CS Fixer**.
 
-## 🔍 Static Analysis
+### 🔍 Static Analysis
 
-**PHPStan** is used to detect:
+- **PHPStan** is used to detect type inconsistencies and potential runtime issues before deployment.
 
-- Type inconsistencies
-- Potential runtime errors
-- Dead code
-- Common programming mistakes
+### 🔄 Continuous Integration
 
-before deployment.
-
-## 🔄 Continuous Integration
-
-Every push and pull request automatically triggers the GitHub Actions pipeline, which performs:
-
-- PHPUnit test execution
-- PHP CS Fixer validation
-- PHPStan static analysis
-
-Additionally, **Codacy** continuously reviews pull requests to monitor technical debt and maintain overall code quality.
+- **GitHub Actions** automatically executes tests, code style checks, and static analysis.
+- **Codacy** reviews every Pull Request to monitor technical debt and maintain code quality.

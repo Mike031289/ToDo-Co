@@ -1,0 +1,33 @@
+security:
+    encoders:
+        AppBundle\Entity\User: bcrypt
+
+    providers:
+        doctrine:
+            entity:
+                class: AppBundle:User
+                property: username
+
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+
+        main:
+            anonymous: ~
+            pattern: ^/
+            # Enable HTTP Basic Authentication for automated functional testing
+            http_basic: ~
+            form_login:
+                login_path: login
+                check_path: login_check
+                always_use_default_target_path:  true
+                default_target_path:  /
+            logout: ~
+            access_denied_handler: app.access_denied_handler
+
+    access_control:
+        - { path: ^/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        # Protect all user management paths (list, create, edit)
+        - { path: ^/users, roles: ROLE_ADMIN }
+        - { path: ^/, roles: ROLE_USER }
