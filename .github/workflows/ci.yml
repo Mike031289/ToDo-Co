@@ -61,9 +61,9 @@ jobs:
           php bin/console doctrine:database:create --env=test --if-not-exists
           php bin/console doctrine:schema:update --env=test --force
 
-      # 7. Hydrate the isolated database with fixtures (if applicable)
+      # 7. Hydrate the isolated database with fixtures (forced purge & load)
       - name: Load Test Fixtures
-        run: php bin/console doctrine:fixtures:load --env=test -n || true
+        run: php bin/console doctrine:fixtures:load --env=test --purge-with-truncate
 
       # 8. Execute the automated test suite
       - name: Run Automated Test Suite
