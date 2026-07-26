@@ -1,4 +1,6 @@
 {
+    "name": "adjoukou/todo-co",
+    "description": "ToDo & Co - Projet OpenClassrooms modernisé sous Symfony 5.4",
     "type": "project",
     "license": "proprietary",
     "minimum-stability": "stable",
