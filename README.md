@@ -15,7 +15,7 @@ The main objective of this project is to take over an existing legacy codebase (
 
 ### 🚀 Modernization Goals Achieved
 
-- **Framework Upgrade:** Migrated the legacy application to **Symfony 3.4** and **PHP 7.4** to ensure stability and long-term dependency support.
+- **Framework Upgrade:** Migrated the legacy application to **Symfony 5.4** and **PHP 7.4** to ensure stability and long-term dependency support (LTS).
 - **Security Overhaul:** Implemented multi-level roles, isolated task ownership, and resolved security vulnerabilities using Symfony **Voters**.
 - **Quality Assurance:** Built a comprehensive automated testing suite with **PHPUnit**, covering controllers, forms, and business logic.
 - **CI/CD Pipeline:** Integrated **GitHub Actions** for continuous integration, including automated tests, static analysis, and code style validation on every push.
@@ -26,12 +26,14 @@ The main objective of this project is to take over an existing legacy codebase (
 
 | Category                      | Technology                    |
 | :---------------------------- | :---------------------------- |
-| **Framework**                 | Symfony 3.4                   |
-| **Language**                  | PHP 7.4                       |
+| **Framework**                 | Symfony 5.4                   |
+| **Language**                  | PHP 8.1                       |
 | **Database**                  | MySQL / MariaDB               |
-| **Testing**                   | PHPUnit                       |
+| **Testing**                   | PHPUnit 9.6                   |
 | **CI/CD**                     | GitHub Actions                |
 | **Static Analysis & Quality** | Codacy, PHPStan, PHP CS Fixer |
+| **Rector for V Migration**    | Rector compatible PHP 8.1     |
+| **Xdebug**                    | Xdebug 3.x
 
 ---
 

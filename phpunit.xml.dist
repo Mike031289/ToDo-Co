@@ -1,45 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.5/phpunit.xsd"
+         backupGlobals="false"
+         colors="true"
+         bootstrap="tests/bootstrap.php">
 
-<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/7.5/phpunit.xsd" backupGlobals="false" colors="true" bootstrap="tests/bootstrap.php" forceCoversAnnotation="false" processIsolation="false">
+    <php>
+        <ini name="error_reporting" value="-1" />
+        <ini name="opcache.enable" value="0" />
+        <server name="KERNEL_CLASS" value="App\Kernel" />
+        <env name="APP_ENV" value="test" force="true" />
+        <env name="SHELL_VERBOSITY" value="-1" />
+        <env name="SYMFONY_PHPUNIT_REMOVE" value="" />
+        <env name="SYMFONY_PHPUNIT_VERSION" value="9.5" />
+    </php>
 
-  <php>
-    <ini name="error_reporting" value="-1"/>
-    <server name="KERNEL_DIR" value="app/"/>
-    <server name="KERNEL_CLASS" value="AppKernel"/>
-    <env name="APP_ENV" value="test" force="true"/>
-    <!-- Disables the Zend OPcache during tests to prevent it from stripping file lines needed for coverage tracking -->
-    <ini name="opcache.enable" value="0"/>
-  </php>
+    <testsuites>
+        <testsuite name="Project Test Suite">
+            <directory>tests</directory>
+        </testsuite>
+    </testsuites>
 
-  <testsuites>
-    <testsuite name="Project Test Suite">
-      <directory>tests</directory>
-    </testsuite>
-  </testsuites>
+    <coverage processUncoveredFiles="true">
+        <include>
+            <directory suffix=".php">src</directory>
+        </include>
+        <exclude>
+            <directory>src/DataFixtures</directory>
+            <file>src/Kernel.php</file>
+        </exclude>
+        <report>
+            <html outputDirectory="public/test-coverage" lowUpperBound="35" highLowerBound="70" />
+            <text outputFile="php://stdout" showUncoveredFiles="true" />
+        </report>
+    </coverage>
 
-  <!-- Code coverage filter configuration -->
-  <filter>
-    <whitelist processUncoveredFilesFromWhitelist="true">
-      <directory suffix=".php">src</directory>
-      <exclude>
-        <directory>src/*Bundle/Resources</directory>
-        <directory>src/*Bundle/Tests</directory>
-        <directory>src/*/*Bundle/Resources</directory>
-        <directory>src/*/*Bundle/Tests</directory>
+    <extensions>
+        <extension class="DAMA\DoctrineTestBundle\PHPUnit\PHPUnitExtension" />
+    </extensions>
 
-        <directory>src/AppBundle/DataFixtures</directory>
-        <file>src/AppBundle/AppKernel.php</file>
-      </exclude>
-    </whitelist>
-  </filter>
+    <listeners>
+        <listener class="Symfony\Bridge\PhpUnit\SymfonyTestsListener" />
+    </listeners>
 
-  <listeners>
-    <listener class="DAMA\DoctrineTestBundle\PHPUnit\PHPUnitListener"/>
-  </listeners>
-
-  <!-- Optional: Automatically generates coverage reports in HTML and text formats during execution -->
-  <logging>
-    <log type="coverage-html" target="var/coverage" lowUpperBound="35" highLowerBound="70"/>
-    <log type="coverage-text" target="php://stdout" showUncoveredFiles="true"/>
-  </logging>
 </phpunit>

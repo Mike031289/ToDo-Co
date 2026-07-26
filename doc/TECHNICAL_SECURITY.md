@@ -62,7 +62,7 @@ For actions on specific resources—specifically deleting tasks—a global role 
 
 ## 🧪 4. Demo Accounts & Integration Testing
 
-The following preconfigured demo accounts are populated by the system fixtures (`AppBundle\DataFixtures\ORM\LoadUserData`) to facilitate quick manual testing and automated integration tests:
+The following preconfigured demo accounts are populated by the system fixtures (`App\DataFixtures\ORM\LoadUserData`) to facilitate quick manual testing and automated integration tests:
 
 | Username      | Password       | Assigned Role | Main Test Purpose                                           |
 | :------------ | :------------- | :------------ | :---------------------------------------------------------- |

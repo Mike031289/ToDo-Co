@@ -1,0 +1,56 @@
+{% extends 'base.html.twig' %}
+{% block title %}
+    Connexion - ToDo & Co
+{% endblock %}
+{% block header_img %}{% endblock %}
+{% block body %}
+    <div class="d-flex justify-content-center">
+        <div class="card shadow-lg border-0 rounded-4 mx-auto">
+            <div class="card-body p-5 w-50">
+                <div class="text-center mb-4">
+                    <h1 class="display-5 fw-bold text-primary">
+                        ToDo & Co
+                    </h1>
+                    <p class="text-muted">
+                        Gérez vos tâches en toute simplicité.
+                    </p>
+                </div>
+                <h2 class="h4 mb-4 text-center">
+                    Connexion à votre espace
+                </h2>
+                {% if error %}
+                    <div class="alert alert-danger">
+                        {{ error.messageKey|trans(error.messageData, 'security') }}
+                    </div>
+                {% endif %}
+                <form action="{{ path('login') }}" method="post">
+                    <div class="mb-4">
+                        <label for="username" class="form-label">
+                            Nom d'utilisateur
+                        </label>
+                        <input type="text" id="username" name="_username" value="{{ last_username }}" class="form-control form-control-lg" placeholder="Identifiant" required autofocus></div>
+                        <div class="mb-4">
+                            <label for="password" class="form-label">
+                                Mot de passe
+                            </label>
+                            <input type="password" id="password" name="_password" class="form-control form-control-lg" placeholder="••••••••" required></div>
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+                                <div class="mt-4">
+                                    <button class="btn btn-primary btn-lg w-100" type="submit">
+                                        Se connecter
+                                    </button>
+                                </div>
+                            </form>
+                            <div class="text-center mt-4 pt-3 border-top">
+                                <p class="text-muted small">
+                                    Vous avez perdu vos accès ?
+                                </p>
+                                <a href="#" class="text-decoration-none small">
+                                    Contacter l'administrateur
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endblock %}
+            
