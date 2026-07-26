@@ -25,6 +25,11 @@ class DefaultControllerTest extends WebTestCase
             '/login'
         );
 
+        // Follow redirect if the login page returns a 302 (e.g. trailing slash or security entry point)
+        if ($client->getResponse()->isRedirection()) {
+            $crawler = $client->followRedirect();
+        }
+
         $this->assertResponseIsSuccessful();
 
         // Submit the login form with valid credentials

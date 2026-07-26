@@ -56,10 +56,11 @@ jobs:
           echo "APP_ENV=test" >> $GITHUB_ENV
 
       # 6. Build the database schema using Doctrine console commands
-      - name: Initialize Database and Schema
+      - name: Create Test Database and Load Fixtures
         run: |
-          php bin/console doctrine:database:create --env=test --if-not-exists
-          php bin/console doctrine:schema:update --env=test --force
+            php bin/console doctrine:database:create --env=test --if-not-exists
+            php bin/console doctrine:schema:update --env=test --force
+            php bin/console doctrine:fixtures:load --env=test --append -n
 
       # 7. Hydrate the isolated database with fixtures (forced purge & load)
       - name: Load Test Fixtures
